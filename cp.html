@@ -1,0 +1,50 @@
+<html>
+<head>
+<meta charset="UTF-8">
+<title>clipboardData--截屏粘贴</title>
+<style type="text/css">
+#box{ width:200px; height:200px; border:1px solid #ddd; }
+</style>
+</head>
+<body id="pasteeee">
+<h1>clipboardData--截屏粘贴</h1>   
+<hr>
+<script type="text/javascript">
+(function(){
+    var imgReader = function( item ){
+        var blob = item.getAsFile(),
+            reader = new FileReader();
+        reader.onload = function( e ){
+            var img = new Image();
+            img.src = e.target.result;
+            document.body.appendChild( img );
+            var b64data = img.src.split(";base64,")[1];
+            //alert(img.src);
+        };
+        reader.readAsDataURL( blob );
+    };
+    document.getElementById( "pasteeee" ).addEventListener( 'paste', function( e ){
+    var clipboardData = e.clipboardData,
+        i = 0,
+        items, item, types;
+    if( clipboardData ){
+        items = clipboardData.items;
+        if( !items ){
+            return;
+        }
+        item = items[0];
+        types = clipboardData.types || [];
+        for( ; i < types.length; i++ ){
+            if( types[i] === 'Files' ){
+                item = items[i];
+                break;
+            }
+        }
+        if( item && item.kind === 'file' && item.type.match(/^image\//i) ){
+            imgReader( item );
+        }
+    }
+    });
+})();  
+</script>
+</body></html>

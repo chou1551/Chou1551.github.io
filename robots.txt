@@ -1,0 +1,17 @@
+# Bypass.World...
+# bypass your world...
+
+User-agent: *
+
+Disallow: /js/
+Disallow: /css/
+Disallow: /fonts/
+Disallow: /images/
+
+Allow: /
+Allow: /archives/
+
+
+Sitemap: https://bypass.world/sitemap.xml
+Sitemap: https://bypass.world/baidusitemap.xml
+
