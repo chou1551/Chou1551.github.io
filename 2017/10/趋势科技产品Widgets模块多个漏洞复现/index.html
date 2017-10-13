@@ -12,7 +12,7 @@
 
 
 
-  <meta name="description" content="多数趋势科技的产品都有管理网页的小部件(widget)。虽然使用 Java/.NET 编写的核心系统，但是这个小部件机制已经用PHP实现了。因此意味着趋势科技的产品中包含有PHP解释器。widget框架有一个代理机制，其proxy_controller.php页面根据用户输入调用相关类来实现该功能，通过分析该功能发现存在多个漏洞，包括命令注入、私钥泄漏、Sqlite6未授权访问、SSRF和认证绕过。"/>
+  <meta name="description" content="多数趋势科技的产品都有管理网页的小部件(widget),通过分析该功能发现存在多个漏洞，包括命令注入、私钥泄漏、Sqlite6未授权访问、SSRF和认证绕过。"/>
 
 
 
@@ -35,20 +35,20 @@
 <link rel="canonical" href="http://yoursite.com/2017/10/趋势科技产品Widgets模块多个漏洞复现/"/>
 
 
-<meta name="description" content="多数趋势科技的产品都有管理网页的小部件(widget)。虽然使用 Java/.NET 编写的核心系统，但是这个小部件机制已经用PHP实现了。因此意味着趋势科技的产品中包含有PHP解释器。widget框架有一个代理机制，其proxy_controller.php页面根据用户输入调用相关类来实现该功能，通过分析该功能发现存在多个漏洞，包括命令注入、私钥泄漏、Sqlite6未授权访问、SSRF和认证绕过">
+<meta name="description" content="多数趋势科技的产品都有管理网页的小部件(widget),通过分析该功能发现存在多个漏洞，包括命令注入、私钥泄漏、Sqlite6未授权访问、SSRF和认证绕过。">
 <meta name="keywords" content="Trend Micro, 趋势科技">
 <meta property="og:type" content="article">
 <meta property="og:title" content="趋势科技产品Widgets模块多个漏洞复现">
 <meta property="og:url" content="http://yoursite.com/2017/10/趋势科技产品Widgets模块多个漏洞复现/index.html">
 <meta property="og:site_name" content="Bypass.World">
-<meta property="og:description" content="多数趋势科技的产品都有管理网页的小部件(widget)。虽然使用 Java/.NET 编写的核心系统，但是这个小部件机制已经用PHP实现了。因此意味着趋势科技的产品中包含有PHP解释器。widget框架有一个代理机制，其proxy_controller.php页面根据用户输入调用相关类来实现该功能，通过分析该功能发现存在多个漏洞，包括命令注入、私钥泄漏、Sqlite6未授权访问、SSRF和认证绕过">
+<meta property="og:description" content="多数趋势科技的产品都有管理网页的小部件(widget),通过分析该功能发现存在多个漏洞，包括命令注入、私钥泄漏、Sqlite6未授权访问、SSRF和认证绕过。">
 <meta property="og:locale" content="en">
 <meta property="og:image" content="https://i.loli.net/2017/10/13/59dfc24ba94dc.jpg">
 <meta property="og:image" content="https://i.loli.net/2017/10/13/59dfc24ba85f1.jpg">
-<meta property="og:updated_time" content="2017-10-13T02:16:58.000Z">
+<meta property="og:updated_time" content="2017-10-13T02:23:30.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="趋势科技产品Widgets模块多个漏洞复现">
-<meta name="twitter:description" content="多数趋势科技的产品都有管理网页的小部件(widget)。虽然使用 Java/.NET 编写的核心系统，但是这个小部件机制已经用PHP实现了。因此意味着趋势科技的产品中包含有PHP解释器。widget框架有一个代理机制，其proxy_controller.php页面根据用户输入调用相关类来实现该功能，通过分析该功能发现存在多个漏洞，包括命令注入、私钥泄漏、Sqlite6未授权访问、SSRF和认证绕过">
+<meta name="twitter:description" content="多数趋势科技的产品都有管理网页的小部件(widget),通过分析该功能发现存在多个漏洞，包括命令注入、私钥泄漏、Sqlite6未授权访问、SSRF和认证绕过。">
 <meta name="twitter:image" content="https://i.loli.net/2017/10/13/59dfc24ba94dc.jpg">
 
 
